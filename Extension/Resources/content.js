@@ -149,11 +149,17 @@ html[data-overhang]::-webkit-scrollbar:horizontal{display:none}`;
   let misses = 0;
   let missed = "";
   let scrolled = 0;
+  let waits = 0; // passes put off in a row; capped, since a page that keeps scrolling itself would put them off for good
 
   function arrange() {
     if (!full || !document.body) return undo();
 
-    if (touches || performance.now() - scrolled < 300) return later();
+    if (performance.now() - scrolled < 300 && waits < 8) {
+      waits += 1;
+
+      return later();
+    }
+    waits = 0;
 
     if (!fits()) {
       misses += 1;
@@ -404,8 +410,15 @@ html[data-overhang]::-webkit-scrollbar:horizontal{display:none}`;
     apply();
   });
 
-  // The panel asks what's going on in this tab.
+  // The panel asks what's going on in this tab, and says when it has changed a setting: Safari doesn't always pass
+  // storage.onChanged on to a page script, so the page would otherwise only notice on its next load.
   browser.runtime.onMessage.addListener((message) => {
+    if (message?.type === "settings")
+      return browser.storage.local.get(KEYS).then((values) => {
+        for (const key of KEYS) saved[key] = values[key];
+        apply();
+      });
+
     if (message?.type !== "state") return;
 
     return Promise.resolve({
@@ -425,6 +438,7 @@ html[data-overhang]::-webkit-scrollbar:horizontal{display:none}`;
         column: left ? "left" : "right",
         scrollX: Math.round(scrollX),
         misses,
+        waits,
         missed,
         tags: tags.length,
         viewport: tags.at(-1)?.content ?? "",

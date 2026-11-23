@@ -15,6 +15,16 @@ async function ask() {
   }
 }
 
+// Tell the page a setting changed, then show what it did.
+async function changed() {
+  try {
+    await browser.tabs.sendMessage(tab.id, { type: "settings" });
+  } catch {
+    // Not running on this page; there's nothing to update.
+  }
+  setTimeout(show, 300);
+}
+
 function hostOf(url) {
   try {
     return new URL(url).hostname;
@@ -45,7 +55,7 @@ async function show() {
       `screen ${m.screen} ${m.orientation}`,
       `shown ${m.shown} at ${m.scale}, inner ${m.inner}, layout ${m.layout}`,
       `column ${m.column}, scrolled ${m.scrollX}`,
-      `size misses ${m.misses}${m.missed ? `, last ${m.missed}` : ""}`,
+      `size misses ${m.misses}${m.missed ? `, last ${m.missed}` : ""}, waiting ${m.waits}`,
       `phone ${state.phone}, duo ${state.duo}, wide ${state.wide}, off ${state.off}`,
       `${m.tags} viewport tag(s): ${m.viewport || "none"}`,
     ].join("\n");
@@ -78,18 +88,19 @@ $("site-on").addEventListener("change", async (event) => {
   const key = every ? `off:${site}` : `on:${site}`;
   if (event.target.checked === every) await browser.storage.local.remove(key);
   else await browser.storage.local.set({ [key]: true });
-  setTimeout(show, 300);
+  await changed();
 });
 
 $("every").addEventListener("change", async (event) => {
   if (event.target.checked) await browser.storage.local.remove(EVERY);
   else await browser.storage.local.set({ [EVERY]: false });
-  setTimeout(show, 300);
+  await changed();
 });
 
 $("under").addEventListener("change", async (event) => {
   if (event.target.checked) await browser.storage.local.set({ [UNDER]: true });
   else await browser.storage.local.remove(UNDER);
+  await changed();
 });
 
 (async () => {
