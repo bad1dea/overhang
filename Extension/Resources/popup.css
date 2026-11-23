@@ -1,0 +1,84 @@
+:root {
+  color-scheme: light dark;
+  --bg: #f2f2f7;
+  --panel: #ffffff;
+  --text: #000000;
+  --dim: #6c6c70;
+  --rule: #c6c6c8;
+  --tint: #0a84ff;
+  --on: #34c759;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1c1c1e;
+    --panel: #2c2c2e;
+    --text: #ffffff;
+    --dim: #98989f;
+    --rule: #3a3a3c;
+    --on: #30d158;
+  }
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  padding: 16px;
+  min-width: 300px;
+  font: 15px/1.35 -apple-system, system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+}
+header { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+header img { border-radius: 8px; }
+h1 { margin: 0; font-size: 17px; font-weight: 600; }
+p { margin: 0 0 12px; }
+.dim { color: var(--dim); }
+.small { font-size: 12px; margin: 12px 0 0; }
+header p { margin: 0; font-size: 13px; overflow-wrap: anywhere; }
+button {
+  display: block;
+  width: 100%;
+  margin: 0 0 12px;
+  padding: 11px;
+  border: 0;
+  border-radius: 12px;
+  background: var(--tint);
+  color: #fff;
+  font: inherit;
+  font-weight: 600;
+}
+.group { background: var(--panel); border-radius: 12px; }
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 44px;
+  padding: 0 12px;
+}
+.row + .row { border-top: 0.5px solid var(--rule); }
+.row[aria-disabled="true"] { opacity: .45; }
+input[type="checkbox"] {
+  appearance: none;
+  flex: none;
+  width: 51px;
+  height: 31px;
+  margin: 0;
+  border-radius: 16px;
+  background: var(--rule);
+  position: relative;
+  transition: background .15s;
+}
+input[type="checkbox"]::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 27px;
+  height: 27px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, .25);
+  transition: transform .15s;
+}
+input[type="checkbox"]:checked { background: var(--on); }
+input[type="checkbox"]:checked::after { transform: translateX(20px); }

@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="popup.css">
+</head>
+<body>
+<header>
+  <img src="icon-96.png" alt="" width="32" height="32">
+  <div>
+    <h1>Overhang</h1>
+    <p id="site" class="dim"></p>
+  </div>
+</header>
+
+<p id="status"></p>
+<button type="button" id="run" hidden>Widen this page</button>
+
+<div class="group">
+  <label class="row">
+    <span>On for this site</span>
+    <input type="checkbox" id="site-on" role="switch">
+  </label>
+  <label class="row">
+    <span>Let text run under the buttons</span>
+    <input type="checkbox" id="under" role="switch">
+  </label>
+</div>
+
+<p class="dim small">Overhang reads where things sit on the page and changes its layout. It keeps nothing and sends nothing.</p>
+<script src="popup.js"></script>
+</body>
+</html>

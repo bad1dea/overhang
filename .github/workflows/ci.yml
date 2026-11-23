@@ -1,0 +1,29 @@
+name: Build
+
+# Unsigned build on every push, so a broken project shows up before TestFlight.
+on:
+  push:
+  pull_request:
+
+jobs:
+  build:
+    runs-on: xcode-27
+    steps:
+      - uses: actions/checkout@v5
+      - name: Select Xcode
+        run: |
+          xc="$(ls -d /Applications/Xcode_27*.app | sort -V | tail -1)"
+          sudo xcode-select -switch "$xc"
+          xcodebuild -version
+      - name: Check the extension's scripts
+        run: |
+          for f in Extension/Resources/*.js; do node --check "$f"; done
+          python3 -m json.tool Extension/Resources/manifest.json >/dev/null
+      - run: brew install xcodegen
+      - run: xcodegen generate
+      - name: Build
+        run: |
+          xcodebuild -project Overhang.xcodeproj -scheme Overhang -configuration Debug \
+            -destination generic/platform=iOS -derivedDataPath build/dd \
+            CODE_SIGNING_ALLOWED=NO build | tail -40
+          test "${PIPESTATUS[0]}" = 0
