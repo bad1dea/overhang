@@ -44,6 +44,7 @@ async function show() {
       `screen ${m.screen} ${m.orientation}`,
       `shown ${m.shown} at ${m.scale}, inner ${m.inner}, layout ${m.layout}`,
       `column ${m.column}, scrolled ${m.scrollX}`,
+      `size misses ${m.misses}${m.missed ? `, last ${m.missed}` : ""}`,
       `phone ${state.phone}, duo ${state.duo}, wide ${state.wide}, off ${state.off}`,
       `${m.tags} viewport tag(s): ${m.viewport || "none"}`,
     ].join("\n");

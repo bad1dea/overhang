@@ -136,10 +136,28 @@ html[data-overhang]::-webkit-scrollbar:horizontal{display:none}`;
   // The page is laid out the full width and shown unzoomed, the part beside the column counted as shown (see wide).
   const fits = () => full && root.clientWidth === full && Math.abs(visualViewport.width + COLUMN - full) <= 2;
 
-  function arrange() {
-    undo();
+  // While the page is scrolling, or Safari's sizes are briefly off (they are, mid-scroll, as its bars move), the last
+  // pass's changes stay as they are and the pass is tried again shortly. Taking them off in between made text and
+  // pictures jump between the two layouts while scrolling. If the sizes stay off for a couple of seconds (a pinch, a
+  // turn of the phone) the changes are taken off.
+  let misses = 0;
+  let missed = "";
+  let scrolled = 0;
 
-    if (!fits() || !document.body) return;
+  function arrange() {
+    if (!full || !document.body) return undo();
+
+    if (touches || performance.now() - scrolled < 300) return later();
+
+    if (!fits()) {
+      misses += 1;
+      missed = `${visualViewport.width}+${COLUMN} vs ${full}, layout ${root.clientWidth}`;
+
+      if (misses % 8 === 0) undo();
+
+      return later();
+    }
+    undo();
     const edge = full - COLUMN - GAP;
     // Everything is measured before anything is written, so the page is laid out once.
     const found = { bars: [], blocks: new Map(), controls: [], rows: [] };
@@ -397,6 +415,8 @@ html[data-overhang]::-webkit-scrollbar:horizontal{display:none}`;
         layout: root.clientWidth,
         column: left ? "left" : "right",
         scrollX: Math.round(scrollX),
+        misses,
+        missed,
         tags: tags.length,
         viewport: tags.at(-1)?.content ?? "",
       },
@@ -406,7 +426,21 @@ html[data-overhang]::-webkit-scrollbar:horizontal{display:none}`;
   addEventListener("resize", widen);
 
   // Safari can settle the width it shows only after a page has started, once the script has looked.
-  visualViewport.addEventListener("resize", () => phone && wide() !== full && widen());
+  // Checked once the resize has settled, so a moment mid-scroll can't narrow the page and widen it again.
+  let settling = 0;
+
+  visualViewport.addEventListener("resize", () => {
+    clearTimeout(settling);
+    settling = setTimeout(() => phone && wide() !== full && widen(), 300);
+  });
+
+  addEventListener(
+    "scroll",
+    () => {
+      scrolled = performance.now();
+    },
+    { passive: true },
+  );
 
   visualViewport.addEventListener("scroll", home);
 
