@@ -336,15 +336,14 @@ html[data-overhang]::-webkit-scrollbar:horizontal{display:none}`;
 
   observer.observe(root, { childList: true, subtree: true, attributes: true, attributeFilter: ["content", "class"] });
 
-  // A round button under Safari's bookmarks button that switches widening for this site. Safari has no way for an
-  // extension to add a button to its column, so this one is drawn on the page, which reaches under the column once
-  // widened. Its spot was measured from screenshots of Safari on a Duo: centered about 48 points in from the screen's
-  // edge, in portrait just below the bookmarks button even when a Live Activity pushes that button about 85 points
-  // down, on its side in the gap between the column's top and middle buttons. When the site isn't widened the page
-  // doesn't reach under the column, so the button waits at the page's edge instead.
+  // A round button just beside Safari's column, level with the space under its bookmarks button, that switches
+  // widening for this site. Safari has no way for an extension to add a button to its column, and the column takes
+  // every touch in its strip, gaps included (a button drawn under it showed but couldn't be tapped), so this one sits
+  // on the page next to it: the same spot whether the page is widened or not. Heights were measured from screenshots
+  // of Safari on a Duo, clear of the bookmarks button even when a Live Activity pushes it about 85 points down.
   const TOP = { portrait: 420, "landscape-secondary": 207, "landscape-primary": 260 }; // the button's center, points
   const SIZE = 48; // Safari's own column buttons, measured
-  const INSET = 24; // from the screen's edge to the button, which centers it on Safari's buttons
+  const INSET = 8; // between the button and the column
 
   // Drawn like Safari's column buttons, light or dark with the phone, so it looks like one of them. The icon shows
   // what a tap does: spread the page out, or bring it back in.
@@ -376,7 +375,7 @@ svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.9;stroke
     const css = host.style;
 
     css.setProperty("top", `${top}px`, "important");
-    css.setProperty(left ? "left" : "right", `${full ? INSET : 8}px`, "important");
+    css.setProperty(left ? "left" : "right", `${(full ? COLUMN : 0) + INSET}px`, "important");
     css.setProperty(left ? "right" : "left", "auto", "important");
     icon.innerHTML = full ? NARROW : WIDEN;
     button.setAttribute("aria-label", full ? "Stop widening this site" : "Widen this site");
@@ -385,8 +384,8 @@ svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.9;stroke
   }
 
   // The tap writes the exception to whichever way every other site goes (see EVERY), and takes effect here at once.
-  // It's taken from touchend as well as click: in the strip under Safari's column iOS doesn't always follow a touch
-  // with a click. The second of the two is ignored.
+  // It's taken from touchend as well as click, in case iOS doesn't follow the touch with a click; the second of the
+  // two is ignored.
   let tapped = 0;
 
   function toggle(event) {
