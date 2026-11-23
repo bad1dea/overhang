@@ -281,7 +281,6 @@ html[data-overhang]::-webkit-scrollbar:horizontal{display:none}`;
   const TOP = { portrait: 505, "landscape-secondary": 207, "landscape-primary": 260 }; // the button's center, points
   const SIZE = 48; // Safari's own column buttons, measured
   const UNDER_COLUMN = 24; // from the screen's edge, which centers it on Safari's buttons
-  const BESIDE = 8; // from the page's edge, when the page doesn't reach under the column
 
   // Drawn like Safari's column buttons, light or dark with the phone, so it looks like one of them. The icon shows
   // what a tap does: spread the page out, or bring it back in.
@@ -305,15 +304,20 @@ svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.9;stroke
   const icon = shadow.querySelector("svg");
 
   function place() {
-    const duo = phone && wide();
+    const across = phone && wide();
 
-    if (!duo || saved[BUTTON] === false) return void host.remove();
+    if (!across || saved[BUTTON] === false) return void host.remove();
     const type = screen.orientation.type;
     const top = TOP[type.startsWith("portrait") ? "portrait" : type] - SIZE / 2;
     const css = host.style;
 
     css.setProperty("top", `${top}px`, "important");
-    css.setProperty(left ? "left" : "right", `${full ? UNDER_COLUMN : BESIDE}px`, "important");
+    // A page that isn't widened ends at the column's edge, so the button is set past that edge by the column's width
+    // to land in the same spot. Fixed elements don't add to the page's scroll width, so this doesn't make it slide.
+    const shown = Math.round(visualViewport.width * visualViewport.scale);
+    const edge = full ? UNDER_COLUMN : UNDER_COLUMN - (across - shown);
+
+    css.setProperty(left ? "left" : "right", `${edge}px`, "important");
     css.setProperty(left ? "right" : "left", "auto", "important");
     icon.innerHTML = full ? NARROW : WIDEN;
     button.setAttribute("aria-label", full ? "Stop widening this site" : "Widen this site");
