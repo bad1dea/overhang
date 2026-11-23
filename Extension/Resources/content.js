@@ -3,9 +3,8 @@
 //
 // On the iPhone Duo's front screen Safari keeps its buttons in an 84-point column along the right and lays pages out
 // beside it (377 of 461 points on our Duo, 382 of 466 on others, 594 of 678 on its side). This lays pages out the
-// full width, so pictures, cards, grids and bars use the whole screen, and keeps what you read or tap clear of the
-// buttons: running text wraps at the column, links and buttons there move in beside it, and fixed bars and pop-ups
-// keep their contents beside it while their color runs on underneath.
+// full width, so pictures, cards, grids, headers and bars use the whole screen, and running text wraps at the column
+// unless you let it run under the buttons.
 //
 // It runs at document_start on sites Safari lets it see, or once on the current page when you tap Widen in the
 // panel (popup.js injects it with scripting.executeScript). Either way it only reads where things sit on the page,
@@ -165,21 +164,16 @@ html[data-overhang]::-webkit-scrollbar:horizontal{display:none}`;
     undo();
     const edge = full - COLUMN - GAP;
     // Everything is measured before anything is written, so the page is laid out once.
-    const found = { bars: [], blocks: new Map(), controls: [], rows: [] };
+    const found = { blocks: new Map(), rows: [] };
     walk(document.body, edge, found, { inside: false, block: null });
-
-    const bars = found.bars.map((el) => [el, getComputedStyle(el)]);
 
     if (!settings.under)
       for (const [el, padding] of found.blocks)
         if (!within(el, found.blocks)) set(el, `padding-${facing().toLowerCase()}`, `${padding}px`);
 
-    for (const [el, css] of bars) fit(el, css, edge);
-
     for (const el of found.rows) el.setAttribute("data-overhang-row", "");
     sliding = found.rows;
 
-    dodge(found.controls, edge);
     observer.takeRecords(); // our own changes aren't the page's
     home();
   }
@@ -205,9 +199,9 @@ html[data-overhang]::-webkit-scrollbar:horizontal{display:none}`;
       scrollBy({ left: rest - scrollX, top: 0, behavior: "instant" });
   }
 
-  // One pass down the page. Fixed and sticky boxes reaching the column are bars, and keep their contents beside it;
-  // rows that scroll sideways bring their own items out from under it. Elsewhere each block holding text reaching
-  // past the edge stops its lines there, and controls reaching past it are moved in after.
+  // One pass down the page. Each block holding text reaching past the edge stops its lines there. Headers, fixed bars
+  // and buttons are left as the page lays them out, full width: Brim moved them in beside the column so they stayed
+  // tappable, but that made every header widen and then shrink back as the page loaded.
   function walk(el, edge, found, { inside, block }) {
     const css = getComputedStyle(el);
 
@@ -215,24 +209,16 @@ html[data-overhang]::-webkit-scrollbar:horizontal{display:none}`;
     const r = box(el);
     const over = r.right - edge;
 
-    // A frame lays out its own page, so it's fitted like a bar: a sign-in or consent dialog then fits beside the
-    // column.
-    const bar =
-      (/fixed|sticky/.test(css.position) || el.tagName === "IFRAME") && over > 0 && r.width > root.clientWidth * 0.6;
-
-    if (bar) found.bars.push(el);
+    const bar = /fixed|sticky/.test(css.position) || el.tagName === "IFRAME";
 
     if (/auto|scroll/.test(css.overflowX) && el.scrollWidth > el.clientWidth + 1) return void found.rows.push(el);
 
-    const control =
-      over > 0 && r.width < root.clientWidth * 0.4 && (el.matches(CONTROLS) || /fixed|sticky/.test(css.position));
-
-    if (control) found.controls.push(el);
+    const control = over > 0 && r.width < root.clientWidth * 0.4 && el.matches(CONTROLS);
 
     // The block whose lines this element's text runs in: itself, or for inline text the block around it. Once a
-    // block's lines stop at the edge, so do those of everything inside it. A bar, or a control that is a box of its
-    // own rather than words in a line, moves in whole and keeps its lines (Chase's "Sign in", narrowed as well as
-    // moved, broke into a letter or two a line).
+    // block's lines stop at the edge, so do those of everything inside it. Text in a bar, or in a control that is a
+    // box of its own rather than words in a line, is left alone (Chase's "Sign in", narrowed, broke into a letter or
+    // two a line).
     const holder = /^inline|^contents$/.test(css.display) ? block : el;
     const text = [...el.childNodes].some((node) => node.nodeType === Node.TEXT_NODE && node.data.trim());
     const whole = bar || (control && css.display !== "inline");
@@ -257,81 +243,6 @@ html[data-overhang]::-webkit-scrollbar:horizontal{display:none}`;
     for (let e = up(el); e; e = up(e)) if (boxes.has(e)) return true;
 
     return false;
-  }
-
-  // A bar, or a row of controls, keeps its full width, so its background, borders and pictures run on under the
-  // column, and its padding on the column's side grows by the part under the column, which brings what it holds
-  // (centered, right-aligned or in a row) in beside it. Brim narrowed bars instead and painted their color on with a
-  // shadow, but a bar with a gradient, an image or a colored line (Kotaku's) then visibly snapped narrower.
-  function fit(el, css, edge) {
-    const under = box(el).right - edge;
-
-    if (under <= 0) return;
-    const side = facing();
-
-    set(el, "box-sizing", "border-box");
-    set(el, `padding-${side.toLowerCase()}`, `${parseFloat(css[`padding${side}`]) + under}px`);
-  }
-
-  // Controls still reaching under the column move in: the row each sits in ends at the edge (see fit), and one in no
-  // row, or that its row doesn't bring in, moves with the small group around it.
-  function dodge(controls, edge) {
-    const over = controls.filter((el) => box(el).right > edge + 0.5);
-    const rows = new Map();
-
-    for (const el of over) {
-      const row = rowOf(el);
-
-      if (row && !rows.has(row)) rows.set(row, getComputedStyle(row));
-    }
-
-    for (const [row, css] of rows) fit(row, css, edge);
-
-    const moved = new Set();
-
-    for (const el of over) {
-      const by = box(el).right - edge;
-      const group = groupOf(el);
-
-      if (by > 0.5 && !moved.has(group)) shift(group, by);
-      moved.add(group);
-    }
-  }
-
-  // Moves an element away from the column on top of its own translate (Tailwind centers dialogs and icons with it), and below the
-  // page's animations of it, which play as the page made them.
-  function shift(el, by) {
-    const translate = getComputedStyle(el).translate;
-    const [x, ...rest] = translate === "none" ? ["0px"] : translate.match(/calc\((?:[^()]|\([^()]*\))*\)|\S+/g);
-
-    set(el, "translate", [`calc(${x} ${left ? "+" : "-"} ${by}px)`, ...rest].join(" "), "");
-  }
-
-  // The nearest bar-like box around a control: most of the page wide, a single line or two tall.
-  function rowOf(el) {
-    for (let e = up(el); e && e !== document.body; e = up(e)) {
-      const r = e.getBoundingClientRect();
-
-      if (r.height > 200) return null;
-
-      if (r.width >= root.clientWidth * 0.6) return e;
-    }
-
-    return null;
-  }
-
-  // The largest box around a control that is still a small group: under half the page wide, one row tall.
-  function groupOf(el) {
-    let group = el;
-
-    for (let e = up(el); e && e !== document.body; e = up(e)) {
-      const r = e.getBoundingClientRect();
-
-      if (r.width > root.clientWidth * 0.5 || r.height > 120) break;
-      group = e;
-    }
-
-    return group;
   }
 
   // A pass runs shortly after the page changes, and at most that often while it keeps changing. (Brim waited for the

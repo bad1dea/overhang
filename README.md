@@ -5,9 +5,8 @@
 A Safari extension that lays web pages out across the whole front screen of the iPhone Duo.
 
 On the front screen Safari keeps its buttons in an 84-point column on the right and lays pages out beside it: 377
-points of the screen's 461 on our Duo (382 of 466 on others). Overhang lays them out the full width. Pictures,
-banners and colored bars run under the buttons; lines of text, links and buttons stop beside them; fixed bars, cookie
-banners and sign-in dialogs end at the column so their buttons stay reachable.
+points of the screen's 461 on our Duo (382 of 466 on others). Overhang lays them out the full width. Pictures, headers,
+banners and colored bars run under the buttons; lines of text stop beside them, unless you let them run under too.
 
 ## Using it
 
