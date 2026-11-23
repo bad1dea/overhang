@@ -279,7 +279,13 @@ html[data-overhang]::-webkit-scrollbar:horizontal{display:none}`;
   // down, on its side in the gap between the column's top and middle buttons. When the site isn't widened the page
   // doesn't reach under the column, so the button waits at the page's edge instead.
   const TOP = { portrait: 420, "landscape-secondary": 207, "landscape-primary": 260 }; // the button's center, points
-  const SIZE = 46;
+  const SIZE = 48; // Safari's own column buttons, measured
+  const INSET = 24; // from the screen's edge to the button, which centers it on Safari's buttons
+
+  // Drawn like Safari's column buttons, light or dark with the phone, so it looks like one of them. The icon shows
+  // what a tap does: spread the page out, or bring it back in.
+  const WIDEN = '<path d="M3.5 12h17M7.5 8l-4 4 4 4M16.5 8l4 4-4 4"/>';
+  const NARROW = '<path d="M12 5v14M3 12h6M6 9l3 3-3 3M21 12h-6M18 9l-3 3 3 3"/>';
 
   const host = document.createElement("overhang-button");
   const shadow = host.attachShadow({ mode: "closed" });
@@ -287,16 +293,15 @@ html[data-overhang]::-webkit-scrollbar:horizontal{display:none}`;
   shadow.innerHTML = `<style>
 :host{all:initial;position:fixed;z-index:2147483647;width:${SIZE}px;height:${SIZE}px}
 button{all:unset;box-sizing:border-box;width:100%;height:100%;border-radius:50%;display:grid;place-items:center;
-  background:rgba(28,28,32,.55);border:.5px solid rgba(255,255,255,.22);color:#f8f5eb;
-  -webkit-backdrop-filter:blur(12px) saturate(1.6);backdrop-filter:blur(12px) saturate(1.6);
-  box-shadow:0 2px 10px rgba(0,0,0,.25);-webkit-tap-highlight-color:transparent}
-button[aria-pressed="true"]{background:rgba(169,154,245,.92);color:#171820;border-color:transparent}
-button:active{transform:scale(.92)}
-svg{width:22px;height:22px}
-</style><button type="button" aria-label="Widen this site"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
-stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h18M7 8l-4 4 4 4M17 8l4 4-4 4"/></svg>
-</button>`;
+  background:rgba(250,250,252,.78);color:#000;border:.5px solid rgba(0,0,0,.1);
+  -webkit-backdrop-filter:blur(20px) saturate(1.8);backdrop-filter:blur(20px) saturate(1.8);
+  box-shadow:0 1px 8px rgba(0,0,0,.12);-webkit-tap-highlight-color:transparent;touch-action:manipulation;cursor:pointer}
+@media (prefers-color-scheme:dark){button{background:rgba(28,28,30,.78);color:#fff;border-color:rgba(255,255,255,.14)}}
+button:active{transform:scale(.9)}
+svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+</style><button type="button"><svg viewBox="0 0 24 24"></svg></button>`;
   const button = shadow.querySelector("button");
+  const icon = shadow.querySelector("svg");
 
   function place() {
     const duo = phone && wide();
@@ -304,23 +309,28 @@ stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12
     if (!duo || saved[BUTTON] === false) return void host.remove();
     const type = screen.orientation.type;
     const top = TOP[type.startsWith("portrait") ? "portrait" : type] - SIZE / 2;
-    const inset = full ? 48 - SIZE / 2 : 8;
     const css = host.style;
 
     css.setProperty("top", `${top}px`, "important");
-    css.setProperty(left ? "left" : "right", `${inset}px`, "important");
+    css.setProperty(left ? "left" : "right", `${full ? INSET : 8}px`, "important");
     css.setProperty(left ? "right" : "left", "auto", "important");
-    css.setProperty("opacity", full ? "1" : ".75", "important");
-    button.setAttribute("aria-pressed", String(Boolean(full)));
+    icon.innerHTML = full ? NARROW : WIDEN;
     button.setAttribute("aria-label", full ? "Stop widening this site" : "Widen this site");
 
     if (!host.isConnected) root.append(host);
   }
 
   // The tap writes the exception to whichever way every other site goes (see EVERY), and takes effect here at once.
-  button.addEventListener("click", (event) => {
+  // It's taken from touchend as well as click: in the strip under Safari's column iOS doesn't always follow a touch
+  // with a click. The second of the two is ignored.
+  let tapped = 0;
+
+  function toggle(event) {
     event.preventDefault();
     event.stopPropagation();
+
+    if (performance.now() - tapped < 500) return;
+    tapped = performance.now();
     const every = saved[EVERY] !== false;
     const key = every ? OFF : ON;
     const value = every ? !settings.off : settings.off;
@@ -330,7 +340,10 @@ stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12
 
     if (value) browser.storage.local.set({ [key]: true });
     else browser.storage.local.remove(key);
-  });
+  }
+
+  button.addEventListener("touchend", toggle, { passive: false });
+  button.addEventListener("click", toggle);
 
   function apply() {
     settings.off = saved[EVERY] === false ? saved[ON] !== true : saved[OFF] === true;
