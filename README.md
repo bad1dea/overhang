@@ -1,5 +1,7 @@
 # Overhang
 
+![Overhang](brand/banner.png)
+
 A Safari extension that lays web pages out across the whole front screen of the iPhone Duo.
 
 On the front screen Safari keeps its buttons in a column on the right and lays pages out beside it: 382 points of the
@@ -27,7 +29,8 @@ It leaves other iPhones, the unfolded Duo, and pages not laid out for phones (no
   can take back.
 - `Extension/Resources/popup.*`: the panel in Safari's menu.
 - `project.yml`: the XcodeGen spec. The `.xcodeproj` isn't committed.
-- `tools/icons.py`: draws the app and extension icons.
+- `brand/`: icon, wordmark and banner sources, and the brand notes. The App Store icon is `brand/icon.svg` rendered
+  square (Apple rounds the corners itself).
 
 ## Building
 

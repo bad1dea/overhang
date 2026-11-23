@@ -16,7 +16,8 @@
 
   const COLUMN = 84; // points Safari keeps for its buttons
   const GAP = 6; // points between the buttons and what you read or tap
-  const SCREENS = { 382: 466, 594: 678 }; // the width Safari gives the page → the screen's
+  const FRONT = 466; // the front screen's short side, in points
+  const SIDEWAYS = 678; // and its long side
 
   const CONTROLS =
     'a[href],button,input,label,select,textarea,summary,[role="button"],[role="link"],[role="menuitem"],[role="tab"],[onclick]';
@@ -54,12 +55,19 @@ html[data-overhang]::-webkit-scrollbar:horizontal{display:none}`;
 
   // The screen's width when Safari has its column on the right, else 0. On its side with the camera on the left
   // (landscape-primary) the column is on the left, and the page stays as Safari lays it out.
-  // The visible width is checked rather than the screen's, which Private Browsing reports made up, and scaled, so a
-  // pinch on another phone never reads as the Duo's.
+  // Private Browsing's fingerprinting protection reports a made-up screen size, so when the screen doesn't read as the
+  // front screen the shown width is checked instead: the screen less the column, scaled so a pinch on another phone
+  // never reads as the Duo's. (Splay checks the same way.)
   function wide() {
-    if (screen.orientation.type === "landscape-primary") return 0;
+    const type = screen.orientation.type;
 
-    return SCREENS[Math.round(visualViewport.width * visualViewport.scale)] ?? 0;
+    if (type === "landscape-primary") return 0;
+    const full = type.startsWith("landscape") ? SIDEWAYS : FRONT;
+    const short = Math.min(screen.width, screen.height);
+
+    if (short === FRONT && Math.max(screen.width, screen.height) === SIDEWAYS) return full;
+
+    return Math.abs(visualViewport.width * visualViewport.scale + COLUMN - full) < 2 ? full : 0;
   }
 
   // The viewport tag decides the layout's width before anything is laid out, and our settings come last, so they win
@@ -347,6 +355,17 @@ html[data-overhang]::-webkit-scrollbar:horizontal{display:none}`;
       duo: Boolean(wide()),
       wide: Boolean(full),
       off: settings.off,
+      // What Safari reports, shown in the panel's details line, for working out pages that don't widen.
+      measured: {
+        screen: `${screen.width}x${screen.height}`,
+        orientation: screen.orientation.type,
+        shown: `${Math.round(visualViewport.width * 10) / 10}x${Math.round(visualViewport.height * 10) / 10}`,
+        scale: Math.round(visualViewport.scale * 1000) / 1000,
+        inner: `${innerWidth}x${innerHeight}`,
+        layout: root.clientWidth,
+        tags: tags.length,
+        viewport: tags.at(-1)?.content ?? "",
+      },
     });
   });
 

@@ -5,8 +5,8 @@
   --text: #000000;
   --dim: #6c6c70;
   --rule: #c6c6c8;
-  --tint: #0a84ff;
-  --on: #34c759;
+  --tint: #6f5fd8;
+  --on: #7edfc5;
 }
 @media (prefers-color-scheme: dark) {
   :root {
@@ -15,7 +15,7 @@
     --text: #ffffff;
     --dim: #98989f;
     --rule: #3a3a3c;
-    --on: #30d158;
+    --on: #7edfc5;
   }
 }
 * { box-sizing: border-box; }
@@ -82,3 +82,16 @@ input[type="checkbox"]::after {
 }
 input[type="checkbox"]:checked { background: var(--on); }
 input[type="checkbox"]:checked::after { transform: translateX(20px); }
+details { margin-top: 12px; }
+summary { cursor: pointer; }
+pre {
+  margin: 6px 0 0;
+  padding: 8px;
+  border-radius: 8px;
+  background: var(--panel);
+  font: 11px/1.4 ui-monospace, Menlo, monospace;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  user-select: text;
+  -webkit-user-select: text;
+}

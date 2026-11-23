@@ -11,8 +11,10 @@ struct OverhangApp: App {
 enum Overhang {
     static let extensionID = (Bundle.main.bundleIdentifier ?? "") + ".extension"
     static let source = URL(string: "https://github.com/bad1dea/overhang")!
-    static let navy = Color(red: 22 / 255, green: 50 / 255, blue: 79 / 255)
-    static let orange = Color(red: 244 / 255, green: 162 / 255, blue: 89 / 255)
+    static let nightfall = Color(red: 0x17 / 255, green: 0x18 / 255, blue: 0x20 / 255)
+    static let lavender = Color(red: 0xA9 / 255, green: 0x9A / 255, blue: 0xF5 / 255)
+    static let mint = Color(red: 0x7E / 255, green: 0xDF / 255, blue: 0xC5 / 255)
+    static let chalk = Color(red: 0xF8 / 255, green: 0xF5 / 255, blue: 0xEB / 255)
 
     // Apps on the Duo's front screen get a window narrower than the screen, so the model is checked instead. The
     // extension only knows this screen's widths (content.js), so on any other iPhone it does nothing.
@@ -107,7 +109,7 @@ struct Home: View {
             }
             .navigationTitle("Overhang")
         }
-        .tint(Overhang.orange)
+        .tint(Color.accentColor)
         .task(id: phase) {
             guard phase == .active else { return }
             enabled = try? await SFSafariExtensionManager.stateOfExtension(withIdentifier: Overhang.extensionID).isEnabled
@@ -143,16 +145,46 @@ struct Home: View {
 }
 
 private struct SettingsButton: View {
+    @Environment(\.openURL) private var openURL
+    @State private var failed: String?
+
     var body: some View {
-        Button {
-            Task { try? await SFSafariSettings.openExtensionsSettings(forIdentifiers: [Overhang.extensionID]) }
-        } label: {
-            Text("Open Safari Settings")
-                .font(.headline)
-                .frame(maxWidth: .infinity)
+        VStack(alignment: .leading, spacing: 12) {
+            Button {
+                Task {
+                    do {
+                        try await SFSafariSettings.openExtensionsSettings(forIdentifiers: [Overhang.extensionID])
+                    } catch {
+                        failed = error.localizedDescription
+                    }
+                }
+            } label: {
+                Text("Open Safari Settings")
+                    .font(.headline)
+                    .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.glassProminent)
+            .controlSize(.large)
+
+            Text("If Settings opens on the list of apps, go to **Safari › Extensions › Overhang**.")
+                .font(.footnote)
+                .foregroundStyle(.secondary)
+
+            // Test build only: which of these lands on Overhang's page in Settings decides what the button does.
+            DisclosureGroup("Other ways to open Settings") {
+                Button("Settings › Overhang") {
+                    openURL(URL(string: UIApplication.openSettingsURLString)!)
+                }
+                Button("Settings › Safari › Extensions") {
+                    openURL(URL(string: "App-prefs:SAFARI&path=WEB_EXTENSIONS")!)
+                }
+            }
+            .font(.footnote)
+
+            if let failed {
+                Text(failed).font(.footnote).foregroundStyle(.red)
+            }
         }
-        .buttonStyle(.glassProminent)
-        .controlSize(.large)
         .listRowInsets(EdgeInsets(top: 12, leading: 16, bottom: 12, trailing: 16))
     }
 }
@@ -189,7 +221,7 @@ private struct Tip: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
         } icon: {
-            Image(systemName: symbol).foregroundStyle(Overhang.orange)
+            Image(systemName: symbol).foregroundStyle(Color.accentColor)
         }
     }
 }
@@ -201,15 +233,15 @@ private struct Preview: View {
             let column = box.size.width * 84 / 466
             let edge: CGFloat = 14
             ZStack(alignment: .topLeading) {
-                Overhang.navy
+                Overhang.nightfall
                 VStack(alignment: .leading, spacing: 9) {
-                    Overhang.orange
+                    Overhang.lavender
                         .frame(height: box.size.height * 0.32)
                         .padding(.horizontal, -edge)
                         .padding(.bottom, 6)
                     ForEach([1.0, 0.82, 0.92, 0.55], id: \.self) { length in
                         Capsule()
-                            .fill(.white.opacity(0.9))
+                            .fill(Overhang.chalk.opacity(0.9))
                             .frame(width: (box.size.width - edge - column - 6) * length, height: 7)
                     }
                 }

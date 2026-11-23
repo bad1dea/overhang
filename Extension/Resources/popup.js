@@ -37,6 +37,16 @@ async function show() {
   $("site").textContent = site || "This page";
   $("status").textContent = describe(state);
   $("run").hidden = Boolean(state) || !tab;
+  $("details").hidden = !state?.measured;
+  if (state?.measured) {
+    const m = state.measured;
+    $("measured").textContent = [
+      `screen ${m.screen} ${m.orientation}`,
+      `shown ${m.shown} at ${m.scale}, inner ${m.inner}, layout ${m.layout}`,
+      `phone ${state.phone}, duo ${state.duo}, wide ${state.wide}, off ${state.off}`,
+      `${m.tags} viewport tag(s): ${m.viewport || "none"}`,
+    ].join("\n");
+  }
 
   const saved = await browser.storage.local.get(site ? [`off:${site}`, UNDER] : [UNDER]);
   $("site-on").checked = saved[`off:${site}`] !== true;
