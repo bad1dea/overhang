@@ -16,14 +16,6 @@ enum Overhang {
     static let mint = Color(red: 0x7E / 255, green: 0xDF / 255, blue: 0xC5 / 255)
     static let chalk = Color(red: 0xF8 / 255, green: 0xF5 / 255, blue: 0xEB / 255)
 
-    // Apps on the Duo's front screen get a window narrower than the screen, so the model is checked instead. The
-    // extension only knows this screen's widths (content.js), so on any other iPhone it does nothing.
-    static var isDuo: Bool {
-        var system = utsname()
-        uname(&system)
-        let machine = withUnsafeBytes(of: system.machine) { String(decoding: $0.prefix { $0 != 0 }, as: UTF8.self) }
-        return (ProcessInfo.processInfo.environment["SIMULATOR_MODEL_IDENTIFIER"] ?? machine) == "iPhone19,4"
-    }
 }
 
 enum Access: String, CaseIterable, Identifiable {
@@ -55,20 +47,6 @@ struct Home: View {
                             .fixedSize(horizontal: false, vertical: true)
                     }
                     .listRowInsets(EdgeInsets(top: 16, leading: 16, bottom: 16, trailing: 16))
-                }
-
-                if !Overhang.isDuo {
-                    Section {
-                        Label {
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text("Made for iPhone Duo").fontWeight(.semibold)
-                                Text("Other iPhones already give pages the whole width, so Overhang leaves them alone.")
-                                    .font(.subheadline).foregroundStyle(.secondary)
-                            }
-                        } icon: {
-                            Image(systemName: "iphone").foregroundStyle(.secondary)
-                        }
-                    }
                 }
 
                 Section {

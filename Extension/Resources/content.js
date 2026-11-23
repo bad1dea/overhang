@@ -1,11 +1,11 @@
 // Overhang's page script. The layout work is Brim's (github.com/AVGVSTVS96/brim, commit de0422f, MIT, see
 // LICENSE); the per-site switch, the text setting and the messages for the panel are Overhang's.
 //
-// On the iPhone Duo's front screen Safari keeps its buttons in a column along the right and lays pages out beside
-// it: 382 points of the screen's 466 (594 of 678 on its side). This lays pages out the full width, so pictures,
-// cards, grids and bars use the whole screen, and keeps what you read or tap clear of the buttons: running text
-// wraps at the column, links and buttons there move in beside it, and fixed bars and pop-ups keep their contents
-// beside it while their color runs on underneath.
+// On the iPhone Duo's front screen Safari keeps its buttons in an 84-point column along the right and lays pages out
+// beside it (377 of 461 points on our Duo, 382 of 466 on others, 594 of 678 on its side). This lays pages out the
+// full width, so pictures, cards, grids and bars use the whole screen, and keeps what you read or tap clear of the
+// buttons: running text wraps at the column, links and buttons there move in beside it, and fixed bars and pop-ups
+// keep their contents beside it while their color runs on underneath.
 //
 // It runs at document_start on sites Safari lets it see, or once on the current page when you tap Widen in the
 // panel (popup.js injects it with scripting.executeScript). Either way it only reads where things sit on the page,
@@ -16,8 +16,9 @@
 
   const COLUMN = 84; // points Safari keeps for its buttons
   const GAP = 6; // points between the buttons and what you read or tap
-  const FRONT = 466; // the front screen's short side, in points
-  const SIDEWAYS = 678; // and its long side
+  // Widths Safari has been seen to show beside its column. They differ between phones (382 of 466 on Brim's and
+  // Splay's Duos, 377 of 461 on ours), so they're only used when the screen size can't be trusted.
+  const SHOWN = [377, 382, 594];
 
   const CONTROLS =
     'a[href],button,input,label,select,textarea,summary,[role="button"],[role="link"],[role="menuitem"],[role="tab"],[onclick]';
@@ -55,19 +56,21 @@ html[data-overhang]::-webkit-scrollbar:horizontal{display:none}`;
 
   // The screen's width when Safari has its column on the right, else 0. On its side with the camera on the left
   // (landscape-primary) the column is on the left, and the page stays as Safari lays it out.
-  // Private Browsing's fingerprinting protection reports a made-up screen size, so when the screen doesn't read as the
-  // front screen the shown width is checked instead: the screen less the column, scaled so a pinch on another phone
-  // never reads as the Duo's. (Splay checks the same way.)
+  // Safari has its column when the screen is the column's width wider than what it shows. The shown width is scaled,
+  // so a pinch on another phone never reads as the Duo's. Private Browsing's fingerprinting protection reports a
+  // made-up screen size; then the shown width is checked against the ones seen on Duos.
   function wide() {
     const type = screen.orientation.type;
 
     if (type === "landscape-primary") return 0;
-    const full = type.startsWith("landscape") ? SIDEWAYS : FRONT;
-    const short = Math.min(screen.width, screen.height);
+    const across = type.startsWith("landscape")
+      ? Math.max(screen.width, screen.height)
+      : Math.min(screen.width, screen.height);
+    const shown = visualViewport.width * visualViewport.scale;
 
-    if (short === FRONT && Math.max(screen.width, screen.height) === SIDEWAYS) return full;
+    if (Math.abs(across - shown - COLUMN) < 2) return across;
 
-    return Math.abs(visualViewport.width * visualViewport.scale + COLUMN - full) < 2 ? full : 0;
+    return SHOWN.some((width) => Math.abs(shown - width) < 1) ? Math.round(shown) + COLUMN : 0;
   }
 
   // The viewport tag decides the layout's width before anything is laid out, and our settings come last, so they win
