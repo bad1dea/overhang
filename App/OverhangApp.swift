@@ -1,4 +1,5 @@
 import SafariServices
+import StoreKit
 import SwiftUI
 
 @main
@@ -11,6 +12,7 @@ struct OverhangApp: App {
 enum Overhang {
     static let extensionID = (Bundle.main.bundleIdentifier ?? "") + ".extension"
     static let source = URL(string: "https://github.com/bad1dea/overhang")!
+    static let tipID = "pro.imnot.overhang.tip"
     static let nightfall = Color(red: 0x17 / 255, green: 0x18 / 255, blue: 0x20 / 255)
     static let lavender = Color(red: 0xA9 / 255, green: 0x9A / 255, blue: 0xF5 / 255)
     static let mint = Color(red: 0x7E / 255, green: 0xDF / 255, blue: 0xC5 / 255)
@@ -73,6 +75,14 @@ struct Home: View {
                         detail: "Tap Overhang in the menu, then Always Allow on This Website. Its pages are widened as they open.")
                     Tip(symbol: "rectangle.portrait.rotate", title: "On its side",
                         detail: "Works both ways round. With the camera on the left, Safari moves its buttons left and Overhang follows them.")
+                }
+
+                Section {
+                    TipButton()
+                } header: {
+                    Text("Support")
+                } footer: {
+                    Text("One time. Everything in Overhang works without it.")
                 }
 
                 Section {
@@ -152,6 +162,66 @@ private struct SettingsButton: View {
             }
         }
         .listRowInsets(EdgeInsets(top: 12, leading: 16, bottom: 12, trailing: 16))
+    }
+}
+
+// A non-consumable, so it can be bought once and shows as bought on every device on the same Apple Account.
+private struct TipButton: View {
+    @State private var product: Product?
+    @State private var bought = false
+    @State private var buying = false
+    @State private var failed: String?
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            if bought {
+                Label("Thanks for the tip", systemImage: "heart.fill")
+                    .foregroundStyle(Overhang.mint)
+            } else {
+                Button {
+                    Task { await buy() }
+                } label: {
+                    HStack {
+                        Label("Leave a tip", systemImage: "heart")
+                        Spacer()
+                        if buying {
+                            ProgressView()
+                        } else if let product {
+                            Text(product.displayPrice).foregroundStyle(.secondary)
+                        }
+                    }
+                }
+                .disabled(product == nil || buying)
+            }
+
+            if let failed {
+                Text(failed).font(.footnote).foregroundStyle(.red)
+            }
+        }
+        .task {
+            product = try? await Product.products(for: [Overhang.tipID]).first
+            if case .verified(let transaction)? = await Transaction.latest(for: Overhang.tipID) {
+                bought = transaction.revocationDate == nil
+            }
+        }
+    }
+
+    private func buy() async {
+        guard let product else { return }
+        buying = true
+        defer { buying = false }
+        failed = nil
+
+        do {
+            if case .success(let result) = try await product.purchase() {
+                if case .verified(let transaction) = result {
+                    await transaction.finish()
+                    bought = true
+                }
+            }
+        } catch {
+            failed = error.localizedDescription
+        }
     }
 }
 

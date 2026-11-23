@@ -11,6 +11,10 @@ on:
         description: Submit for review
         type: boolean
         default: false
+      tip:
+        description: Make the tip in-app purchase first
+        type: boolean
+        default: false
 
 jobs:
   store:
@@ -28,4 +32,6 @@ jobs:
         with:
           ruby-version: "3.4"
           bundler-cache: true
+      - if: inputs.tip
+        run: bundle exec fastlane tip
       - run: bundle exec fastlane store
