@@ -272,14 +272,16 @@ html[data-overhang]::-webkit-scrollbar:horizontal{display:none}`;
 
   observer.observe(root, { childList: true, subtree: true, attributes: true, attributeFilter: ["content", "class"] });
 
-  // A round button just beside Safari's column, level with the space under its bookmarks button, that switches
-  // widening for this site. Safari has no way for an extension to add a button to its column, and the column takes
-  // every touch in its strip, gaps included (a button drawn under it showed but couldn't be tapped), so this one sits
-  // on the page next to it: the same spot whether the page is widened or not. Heights were measured from screenshots
-  // of Safari on a Duo, clear of the bookmarks button even when a Live Activity pushes it about 85 points down.
-  const TOP = { portrait: 420, "landscape-secondary": 207, "landscape-primary": 260 }; // the button's center, points
+  // A round button in the gap between Safari's column buttons that switches widening for this site. Safari has no way
+  // for an extension to add a button to its column, so this one is drawn on the page, which reaches under the column
+  // once widened. In portrait it sits just above New Tab, as Widen's does: a Live Activity pushes Back and Bookmarks
+  // about 85 points down, but not New Tab. On its side it sits in the gap between the column's top and middle
+  // buttons. When the site isn't widened the page doesn't reach under the column, so it waits at the page's edge.
+  // Heights were measured from screenshots of Safari on a Duo and from Splay's measurements.
+  const TOP = { portrait: 505, "landscape-secondary": 207, "landscape-primary": 260 }; // the button's center, points
   const SIZE = 48; // Safari's own column buttons, measured
-  const INSET = 8; // between the button and the column
+  const UNDER_COLUMN = 24; // from the screen's edge, which centers it on Safari's buttons
+  const BESIDE = 8; // from the page's edge, when the page doesn't reach under the column
 
   // Drawn like Safari's column buttons, light or dark with the phone, so it looks like one of them. The icon shows
   // what a tap does: spread the page out, or bring it back in.
@@ -311,7 +313,7 @@ svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.9;stroke
     const css = host.style;
 
     css.setProperty("top", `${top}px`, "important");
-    css.setProperty(left ? "left" : "right", `${(full ? COLUMN : 0) + INSET}px`, "important");
+    css.setProperty(left ? "left" : "right", `${full ? UNDER_COLUMN : BESIDE}px`, "important");
     css.setProperty(left ? "right" : "left", "auto", "important");
     icon.innerHTML = full ? NARROW : WIDEN;
     button.setAttribute("aria-label", full ? "Stop widening this site" : "Widen this site");
@@ -320,9 +322,11 @@ svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.9;stroke
   }
 
   // The tap writes the exception to whichever way every other site goes (see EVERY), and takes effect here at once.
-  // It's taken from touchend as well as click, in case iOS doesn't follow the touch with a click; the second of the
-  // two is ignored.
+  // Under Safari's column iOS doesn't send a touch to the element under the finger (a button there showed but
+  // didn't answer), so every touch and click on the page is checked against where the button is drawn. Both a
+  // touchend and the click after it can arrive; the second is ignored.
   let tapped = 0;
+  let lastTap = "";
 
   function toggle(event) {
     event.preventDefault();
@@ -341,8 +345,33 @@ svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.9;stroke
     else browser.storage.local.remove(key);
   }
 
-  button.addEventListener("touchend", toggle, { passive: false });
-  button.addEventListener("click", toggle);
+  function onButton(x, y) {
+    if (!host.isConnected) return false;
+    const r = host.getBoundingClientRect();
+
+    return x >= r.left - 6 && x <= r.right + 6 && y >= r.top - 6 && y <= r.bottom + 6;
+  }
+
+  function heard(event, x, y) {
+    const r = host.isConnected ? host.getBoundingClientRect() : null;
+    const target = event.target?.tagName?.toLowerCase() ?? "?";
+
+    lastTap = `${event.type} at ${Math.round(x)},${Math.round(y)} on ${target}` +
+      (r ? `, button ${Math.round(r.left)},${Math.round(r.top)}` : "");
+
+    if (onButton(x, y)) toggle(event);
+  }
+
+  addEventListener(
+    "touchend",
+    (event) => {
+      const touch = event.changedTouches[0];
+
+      if (touch) heard(event, touch.clientX, touch.clientY);
+    },
+    { capture: true, passive: false },
+  );
+  addEventListener("click", (event) => heard(event, event.clientX, event.clientY), true);
 
   function apply() {
     settings.off = saved[EVERY] === false ? saved[ON] !== true : saved[OFF] === true;
@@ -400,6 +429,7 @@ svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.9;stroke
         column: left ? "left" : "right",
         scrollX: Math.round(scrollX),
         misses,
+        lastTap,
         missed,
         tags: tags.length,
         viewport: tags.at(-1)?.content ?? "",

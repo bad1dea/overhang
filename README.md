@@ -13,8 +13,7 @@ banners and colored bars run under the buttons; lines of text stop beside them, 
 1. Install Overhang and open it. **Open Safari Settings** goes straight to the extension.
 2. Turn on **Allow Extension** and set **All Websites** to **Allow**. Every page is widened as it opens.
 
-A round button beside Safari's column, under the level of its bookmarks button, switches widening for the site
-you're on. The panel behind
+A round button in Safari's column, just above New Tab, switches widening for the site you're on. The panel behind
 **•••** › **Overhang** has **Widen every site** (on unless you turn it off), a switch for the site
 you're on (an exception to the first: skip this site, or widen it when the rest aren't), **Widen this page** for a
 page Overhang can't see yet, a switch to let text run under the buttons, and one to hide the round button.

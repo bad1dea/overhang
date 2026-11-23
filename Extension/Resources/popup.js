@@ -59,6 +59,7 @@ async function show() {
       `size misses ${m.misses}${m.missed ? `, last ${m.missed}` : ""}, waiting ${m.waits}`,
       `phone ${state.phone}, duo ${state.duo}, wide ${state.wide}, off ${state.off}`,
       `${m.tags} viewport tag(s): ${m.viewport || "none"}`,
+      `last tap: ${m.lastTap || "none yet"}`,
     ].join("\n");
   }
 
