@@ -14,9 +14,10 @@ banners and sign-in dialogs end at the column so their buttons stay reachable.
 1. Install Overhang and open it. **Open Safari Settings** goes straight to the extension.
 2. Turn on **Allow Extension** and set **All Websites** to **Allow**. Every page is widened as it opens.
 
-The panel behind **•••** › **Overhang** has **Widen every site** (on unless you turn it off), a switch for the site
+A round button under Safari's bookmarks button switches widening for the site you're on. The panel behind
+**•••** › **Overhang** has **Widen every site** (on unless you turn it off), a switch for the site
 you're on (an exception to the first: skip this site, or widen it when the rest aren't), **Widen this page** for a
-page Overhang can't see yet, and a switch to let text run under the buttons.
+page Overhang can't see yet, a switch to let text run under the buttons, and one to hide the round button.
 
 If you'd rather Safari kept Overhang out of most sites, set **All Websites** to **Ask** and allow sites one at a time
 from the same menu.

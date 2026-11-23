@@ -32,7 +32,8 @@
   const OFF = `off:${site}`;
   const ON = `on:${site}`;
   const UNDER = "textUnder";
-  const KEYS = [EVERY, OFF, ON, UNDER];
+  const BUTTON = "button";
+  const KEYS = [EVERY, OFF, ON, UNDER, BUTTON];
   const saved = {};
 
   const settings = { off: false, under: false, loaded: false };
@@ -92,6 +93,7 @@ html[data-overhang]::-webkit-scrollbar:horizontal{display:none}`;
 
     if (!style.isConnected) root.append(style);
 
+    place();
     later(0);
   }
 
@@ -142,24 +144,15 @@ html[data-overhang]::-webkit-scrollbar:horizontal{display:none}`;
   // The page is laid out the full width and shown unzoomed, the part beside the column counted as shown (see wide).
   const fits = () => full && root.clientWidth === full && Math.abs(visualViewport.width + COLUMN - full) <= 2;
 
-  // While the page is scrolling, or Safari's sizes are briefly off (they are, mid-scroll, as its bars move), the last
-  // pass's changes stay as they are and the pass is tried again shortly. Taking them off in between made text and
-  // pictures jump between the two layouts while scrolling. If the sizes stay off for a couple of seconds (a pinch, a
-  // turn of the phone) the changes are taken off.
+  // While Safari's sizes are briefly off (they are, mid-scroll, as its bars move), the last pass's changes stay as
+  // they are and the pass is tried again shortly. Taking them off in between made text and pictures jump between the
+  // two layouts while scrolling. If the sizes stay off for a couple of seconds (a pinch, a turn of the phone) the
+  // changes are taken off.
   let misses = 0;
   let missed = "";
-  let scrolled = 0;
-  let waits = 0; // passes put off in a row; capped, since a page that keeps scrolling itself would put them off for good
 
   function arrange() {
     if (!full || !document.body) return undo();
-
-    if (performance.now() - scrolled < 300 && waits < 8) {
-      waits += 1;
-
-      return later();
-    }
-    waits = 0;
 
     if (!fits()) {
       misses += 1;
@@ -341,12 +334,23 @@ html[data-overhang]::-webkit-scrollbar:horizontal{display:none}`;
     return group;
   }
 
-  // A pass runs a moment after the page stops changing, and again as late content arrives.
+  // A pass runs shortly after the page changes, and at most that often while it keeps changing. (Brim waited for the
+  // page to stop changing, but Kotaku never stops while it's scrolled, and its header, put back as it scrolls, then
+  // stayed under the column.)
   let timer = 0;
+  let due = Infinity;
 
-  function later(delay = 250) {
+  function later(delay = 120) {
+    const at = performance.now() + delay;
+
+    if (timer && at >= due) return;
     clearTimeout(timer);
-    timer = setTimeout(() => requestAnimationFrame(arrange), delay);
+    due = at;
+    timer = setTimeout(() => {
+      timer = 0;
+      due = Infinity;
+      requestAnimationFrame(arrange);
+    }, delay);
   }
 
   const observer = new MutationObserver(() => {
@@ -356,6 +360,66 @@ html[data-overhang]::-webkit-scrollbar:horizontal{display:none}`;
   });
 
   observer.observe(root, { childList: true, subtree: true, attributes: true, attributeFilter: ["content", "class"] });
+
+  // A round button under Safari's bookmarks button that switches widening for this site. Safari has no way for an
+  // extension to add a button to its column, so this one is drawn on the page, which reaches under the column once
+  // widened. Its spot was measured from screenshots of Safari on a Duo: centered about 48 points in from the screen's
+  // edge, in portrait just below the bookmarks button even when a Live Activity pushes that button about 85 points
+  // down, on its side in the gap between the column's top and middle buttons. When the site isn't widened the page
+  // doesn't reach under the column, so the button waits at the page's edge instead.
+  const TOP = { portrait: 420, "landscape-secondary": 207, "landscape-primary": 260 }; // the button's center, points
+  const SIZE = 46;
+
+  const host = document.createElement("overhang-button");
+  const shadow = host.attachShadow({ mode: "closed" });
+
+  shadow.innerHTML = `<style>
+:host{all:initial;position:fixed;z-index:2147483647;width:${SIZE}px;height:${SIZE}px}
+button{all:unset;box-sizing:border-box;width:100%;height:100%;border-radius:50%;display:grid;place-items:center;
+  background:rgba(28,28,32,.55);border:.5px solid rgba(255,255,255,.22);color:#f8f5eb;
+  -webkit-backdrop-filter:blur(12px) saturate(1.6);backdrop-filter:blur(12px) saturate(1.6);
+  box-shadow:0 2px 10px rgba(0,0,0,.25);-webkit-tap-highlight-color:transparent}
+button[aria-pressed="true"]{background:rgba(169,154,245,.92);color:#171820;border-color:transparent}
+button:active{transform:scale(.92)}
+svg{width:22px;height:22px}
+</style><button type="button" aria-label="Widen this site"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h18M7 8l-4 4 4 4M17 8l4 4-4 4"/></svg>
+</button>`;
+  const button = shadow.querySelector("button");
+
+  function place() {
+    const duo = phone && wide();
+
+    if (!duo || saved[BUTTON] === false) return void host.remove();
+    const type = screen.orientation.type;
+    const top = TOP[type.startsWith("portrait") ? "portrait" : type] - SIZE / 2;
+    const inset = full ? 48 - SIZE / 2 : 8;
+    const css = host.style;
+
+    css.setProperty("top", `${top}px`, "important");
+    css.setProperty(left ? "left" : "right", `${inset}px`, "important");
+    css.setProperty(left ? "right" : "left", "auto", "important");
+    css.setProperty("opacity", full ? "1" : ".75", "important");
+    button.setAttribute("aria-pressed", String(Boolean(full)));
+    button.setAttribute("aria-label", full ? "Stop widening this site" : "Widen this site");
+
+    if (!host.isConnected) root.append(host);
+  }
+
+  // The tap writes the exception to whichever way every other site goes (see EVERY), and takes effect here at once.
+  button.addEventListener("click", (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    const every = saved[EVERY] !== false;
+    const key = every ? OFF : ON;
+    const value = every ? !settings.off : settings.off;
+
+    saved[key] = value || undefined;
+    apply();
+
+    if (value) browser.storage.local.set({ [key]: true });
+    else browser.storage.local.remove(key);
+  });
 
   function apply() {
     settings.off = saved[EVERY] === false ? saved[ON] !== true : saved[OFF] === true;
@@ -413,7 +477,6 @@ html[data-overhang]::-webkit-scrollbar:horizontal{display:none}`;
         column: left ? "left" : "right",
         scrollX: Math.round(scrollX),
         misses,
-        waits,
         missed,
         tags: tags.length,
         viewport: tags.at(-1)?.content ?? "",
@@ -431,14 +494,6 @@ html[data-overhang]::-webkit-scrollbar:horizontal{display:none}`;
     clearTimeout(settling);
     settling = setTimeout(() => phone && wide() !== full && widen(), 300);
   });
-
-  addEventListener(
-    "scroll",
-    () => {
-      scrolled = performance.now();
-    },
-    { passive: true },
-  );
 
   visualViewport.addEventListener("scroll", home);
 

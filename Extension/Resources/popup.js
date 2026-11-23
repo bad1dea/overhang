@@ -1,6 +1,7 @@
 const $ = (id) => document.getElementById(id);
 const UNDER = "textUnder";
 const EVERY = "every";
+const BUTTON = "button";
 
 let tab = null;
 let site = "";
@@ -61,7 +62,7 @@ async function show() {
     ].join("\n");
   }
 
-  const saved = await browser.storage.local.get(site ? [EVERY, `off:${site}`, `on:${site}`, UNDER] : [EVERY, UNDER]);
+  const saved = await browser.storage.local.get(site ? [EVERY, `off:${site}`, `on:${site}`, UNDER, BUTTON] : [EVERY, UNDER, BUTTON]);
   const every = saved[EVERY] !== false;
   $("every").checked = every;
   $("site-on").checked = every ? saved[`off:${site}`] !== true : saved[`on:${site}`] === true;
@@ -69,6 +70,7 @@ async function show() {
   $("site-on").disabled = !site;
   $("site-on").closest(".row").setAttribute("aria-disabled", String(!site));
   $("under").checked = saved[UNDER] === true;
+  $("button").checked = saved[BUTTON] !== false;
 }
 
 $("run").addEventListener("click", async () => {
@@ -88,6 +90,12 @@ $("site-on").addEventListener("change", async (event) => {
   const key = every ? `off:${site}` : `on:${site}`;
   if (event.target.checked === every) await browser.storage.local.remove(key);
   else await browser.storage.local.set({ [key]: true });
+  await changed();
+});
+
+$("button").addEventListener("change", async (event) => {
+  if (event.target.checked) await browser.storage.local.remove(BUTTON);
+  else await browser.storage.local.set({ [BUTTON]: false });
   await changed();
 });
 
