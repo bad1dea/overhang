@@ -12,13 +12,14 @@ banners and sign-in dialogs end at the column so their buttons stay reachable.
 ## Using it
 
 1. Install Overhang and open it. **Open Safari Settings** goes straight to the extension.
-2. Turn on **Allow Extension**, then pick how much Safari lets it see:
-   - **Ask** (recommended): it runs nowhere until you allow a site. Open the site, tap **•••**, then **Overhang**, and
-     choose **Always Allow on This Website**.
-   - **Allow**: every page is widened as it opens.
+2. Turn on **Allow Extension** and set **All Websites** to **Allow**. Every page is widened as it opens.
 
-The panel behind **•••** › **Overhang** can widen the page you're on once (handy on a site you haven't allowed),
-switch Overhang off for a site, and let text run under the buttons.
+The panel behind **•••** › **Overhang** has **Widen every site** (on unless you turn it off), a switch for the site
+you're on (an exception to the first: skip this site, or widen it when the rest aren't), **Widen this page** for a
+page Overhang can't see yet, and a switch to let text run under the buttons.
+
+If you'd rather Safari kept Overhang out of most sites, set **All Websites** to **Ask** and allow sites one at a time
+from the same menu.
 
 It works in portrait and in both landscapes (with the camera on the left Safari moves its column to the left, and
 Overhang mirrors everything), with or without Shift Display for a case. It leaves other iPhones, the unfolded Duo,

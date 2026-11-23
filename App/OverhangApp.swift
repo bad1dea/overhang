@@ -19,13 +19,13 @@ enum Overhang {
 }
 
 enum Access: String, CaseIterable, Identifiable {
-    case pick, every
+    case every, pick
     var id: Self { self }
 
     var title: LocalizedStringKey {
         switch self {
-        case .pick: "Sites I pick"
         case .every: "Every site"
+        case .pick: "Sites I pick"
         }
     }
 }
@@ -33,7 +33,7 @@ enum Access: String, CaseIterable, Identifiable {
 struct Home: View {
     @Environment(\.scenePhase) private var phase
     @State private var enabled: Bool?
-    @State private var access = Access.pick
+    @State private var access = Access.every
 
     var body: some View {
         NavigationStack {
@@ -63,12 +63,12 @@ struct Home: View {
                 } footer: {
                     Text(access == .pick
                          ? "Safari only lets Overhang into the sites you allow. Everywhere else it can't see the page until you tap it in Safari's menu."
-                         : "Overhang widens every page without asking. You can still switch it off for a site from Safari's menu.")
+                         : "Overhang widens every page. To skip a site, or to widen only a few, use the switches in Overhang's panel in Safari's menu.")
                 }
 
                 Section("In Safari") {
                     Tip(symbol: "puzzlepiece.extension", title: "Overhang in the ••• menu",
-                        detail: "Widen this page once, switch Overhang off for a site, or let text run under the buttons.")
+                        detail: "Widen every site or none, make exceptions for the site you're on, or let text run under the buttons.")
                     Tip(symbol: "lock.shield", title: "Allow a site for good",
                         detail: "Tap Overhang in the menu, then Always Allow on This Website. Its pages are widened as they open.")
                     Tip(symbol: "rectangle.portrait.rotate", title: "On its side",

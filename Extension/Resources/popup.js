@@ -1,5 +1,6 @@
 const $ = (id) => document.getElementById(id);
 const UNDER = "textUnder";
+const EVERY = "every";
 
 let tab = null;
 let site = "";
@@ -24,7 +25,7 @@ function hostOf(url) {
 
 function describe(state) {
   if (!state) return "Not running on this page. Widen it once, or allow Overhang on this site in Safari to have it widen every page here.";
-  if (state.off) return "Off for this site.";
+  if (state.off) return "Not widening this site.";
   if (state.wide) return "Using the whole screen.";
   if (!state.duo) return "Nothing to do here: Safari already gives this page the whole screen.";
   if (!state.phone) return "This page isn't laid out for phones, so it's left as it is.";
@@ -50,8 +51,11 @@ async function show() {
     ].join("\n");
   }
 
-  const saved = await browser.storage.local.get(site ? [`off:${site}`, UNDER] : [UNDER]);
-  $("site-on").checked = saved[`off:${site}`] !== true;
+  const saved = await browser.storage.local.get(site ? [EVERY, `off:${site}`, `on:${site}`, UNDER] : [EVERY, UNDER]);
+  const every = saved[EVERY] !== false;
+  $("every").checked = every;
+  $("site-on").checked = every ? saved[`off:${site}`] !== true : saved[`on:${site}`] === true;
+  $("site-label").textContent = every ? "On for this site" : "Widen this site anyway";
   $("site-on").disabled = !site;
   $("site-on").closest(".row").setAttribute("aria-disabled", String(!site));
   $("under").checked = saved[UNDER] === true;
@@ -68,9 +72,18 @@ $("run").addEventListener("click", async () => {
   setTimeout(show, 300);
 });
 
+// The site switch writes the exception to whichever way every other site goes.
 $("site-on").addEventListener("change", async (event) => {
-  if (event.target.checked) await browser.storage.local.remove(`off:${site}`);
-  else await browser.storage.local.set({ [`off:${site}`]: true });
+  const every = $("every").checked;
+  const key = every ? `off:${site}` : `on:${site}`;
+  if (event.target.checked === every) await browser.storage.local.remove(key);
+  else await browser.storage.local.set({ [key]: true });
+  setTimeout(show, 300);
+});
+
+$("every").addEventListener("change", async (event) => {
+  if (event.target.checked) await browser.storage.local.remove(EVERY);
+  else await browser.storage.local.set({ [EVERY]: false });
   setTimeout(show, 300);
 });
 

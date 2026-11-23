@@ -26,8 +26,14 @@
 
   const root = document.documentElement;
   const site = location.hostname;
+  // Every site is widened unless EVERY is false. Either way a site can be the exception: off:<site> while every site
+  // is widened, on:<site> while none are.
+  const EVERY = "every";
   const OFF = `off:${site}`;
+  const ON = `on:${site}`;
   const UNDER = "textUnder";
+  const KEYS = [EVERY, OFF, ON, UNDER];
+  const saved = {};
 
   const settings = { off: false, under: false, loaded: false };
 
@@ -370,29 +376,32 @@ html[data-overhang]::-webkit-scrollbar:horizontal{display:none}`;
 
   observer.observe(root, { childList: true, subtree: true, attributes: true, attributeFilter: ["content", "class"] });
 
+  function apply() {
+    settings.off = saved[EVERY] === false ? saved[ON] !== true : saved[OFF] === true;
+    settings.under = saved[UNDER] === true;
+    widen();
+  }
+
   // Storage answers after the page has started, so the page is widened straight away and put back if this site is
   // switched off. Waiting instead would let Safari lay the page out narrow first on every site.
   adopt();
 
   browser.storage.local
-    .get([OFF, UNDER])
-    .then((saved) => {
-      settings.off = saved[OFF] === true;
-      settings.under = saved[UNDER] === true;
+    .get(KEYS)
+    .then((values) => {
+      Object.assign(saved, values);
       settings.loaded = true;
-      widen();
+      apply();
     })
     .catch(() => {
       settings.loaded = true;
     });
 
   browser.storage.onChanged.addListener((change, area) => {
-    if (area !== "local") return;
+    if (area !== "local" || !KEYS.some((key) => key in change)) return;
 
-    if (OFF in change) settings.off = change[OFF].newValue === true;
-
-    if (UNDER in change) settings.under = change[UNDER].newValue === true;
-    widen();
+    for (const key of KEYS) if (key in change) saved[key] = change[key].newValue;
+    apply();
   });
 
   // The panel asks what's going on in this tab.
