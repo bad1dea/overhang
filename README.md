@@ -54,6 +54,9 @@ CI (`.github/workflows`):
   `DIST_PROFILE_BASE64` and `DIST_PROFILE_EXTENSION_BASE64`).
 - `testflight.yml` builds, signs, uploads and hands the build to the internal testers. The build number is the run
   number, and the manifest version follows it because Safari only reloads an extension's scripts when that changes.
+- `app-store.yml` uploads the listing in `fastlane/metadata` (and `fastlane/screenshots`, once there are some) and
+  picks the build; tick submit to send it for review. Pricing, age rating, the privacy answers and App Review's contact
+  details are set in App Store Connect.
 
 ## Credits
 
