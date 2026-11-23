@@ -32,7 +32,8 @@
   const ON = `on:${site}`;
   const UNDER = "textUnder";
   const BUTTON = "button";
-  const KEYS = [EVERY, OFF, ON, UNDER, BUTTON];
+  const CAMERA = "camera";
+  const KEYS = [EVERY, OFF, ON, UNDER, BUTTON, CAMERA];
   const saved = {};
 
   const settings = { off: false, under: false, loaded: false };
@@ -174,6 +175,8 @@ html[data-overhang]::-webkit-scrollbar:horizontal{display:none}`;
     for (const el of found.rows) el.setAttribute("data-overhang-row", "");
     sliding = found.rows;
 
+    if (saved[CAMERA] === true) clearCamera();
+
     observer.takeRecords(); // our own changes aren't the page's
     home();
   }
@@ -234,6 +237,67 @@ html[data-overhang]::-webkit-scrollbar:horizontal{display:none}`;
     // Web components (Reddit's) lay out their own open shadow trees, with the page's elements placed in them.
     for (const child of [...(el.shadowRoot?.children ?? []), ...el.children])
       walk(child, edge, found, { inside: inside || whole || (text && Boolean(holder)), block: holder });
+  }
+
+  // Where Safari's camera, clock and status icons sit at the top of its column, per orientation: [points in from the
+  // screen's edge, top, bottom]. From Splay's measurements on a Duo; with the camera on the left the camera's pill
+  // reaches further in at the very top.
+  const CAMERA_ZONES = {
+    portrait: [[78, 12, 155]],
+    "landscape-secondary": [[77, 20, 136]],
+    "landscape-primary": [
+      [155, 0, 78],
+      [77, 78, 194],
+    ],
+  };
+
+  // With "Keep header buttons clear of the camera" on, a link or button the camera or clock would cover slides in
+  // sideways, with the small group around it, by just enough to clear it. Nothing else in the header moves or changes
+  // size, and the slide is animated, so it doesn't jump.
+  function clearCamera() {
+    const type = screen.orientation.type;
+    const zones = CAMERA_ZONES[type.startsWith("portrait") ? "portrait" : type];
+    const moved = new Set();
+
+    for (const el of document.querySelectorAll(CONTROLS)) {
+      const r = box(el);
+
+      if (!r.width || r.top > 200 || r.width > root.clientWidth * 0.4) continue;
+      const zone = zones.find(([w, top, bottom]) => r.right > full - w - GAP && r.top < bottom && r.bottom > top);
+
+      if (!zone) continue;
+      const group = groupOf(el);
+
+      if (moved.has(group)) continue;
+      moved.add(group);
+      const by = box(group).right - (full - zone[0] - GAP);
+
+      if (by > 0.5) shift(group, by);
+    }
+  }
+
+  // The largest box around a control that is still a small group: under half the page wide, one row tall.
+  function groupOf(el) {
+    let group = el;
+
+    for (let e = up(el); e && e !== document.body; e = up(e)) {
+      const r = e.getBoundingClientRect();
+
+      if (r.width > root.clientWidth * 0.5 || r.height > 120) break;
+      group = e;
+    }
+
+    return group;
+  }
+
+  // Moves an element away from the column on top of its own translate (Tailwind centers icons with it), easing
+  // there unless the page animates it itself.
+  function shift(el, by) {
+    const css = getComputedStyle(el);
+    const [x, ...rest] = css.translate === "none" ? ["0px"] : css.translate.match(/calc\((?:[^()]|\([^()]*\))*\)|\S+/g);
+
+    if (/^(all )?0s/.test(css.transition) || css.transitionDuration === "0s") set(el, "transition", "translate .25s ease-out", "");
+    set(el, "translate", [`calc(${x} ${left ? "+" : "-"} ${by}px)`, ...rest].join(" "), "");
   }
 
   // The box around an element, across the edge of a shadow tree.

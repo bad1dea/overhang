@@ -16,7 +16,8 @@ banners and colored bars run under the buttons; lines of text stop beside them, 
 A round button under Safari's bookmarks button switches widening for the site you're on. The panel behind
 **•••** › **Overhang** has **Widen every site** (on unless you turn it off), a switch for the site
 you're on (an exception to the first: skip this site, or widen it when the rest aren't), **Widen this page** for a
-page Overhang can't see yet, a switch to let text run under the buttons, and one to hide the round button.
+page Overhang can't see yet, a switch to let text run under the buttons, one to slide header buttons out from under Safari's camera and clock
+(off by default), and one to hide the round button.
 
 If you'd rather Safari kept Overhang out of most sites, set **All Websites** to **Ask** and allow sites one at a time
 from the same menu.
