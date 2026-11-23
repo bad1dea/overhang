@@ -1,0 +1,12 @@
+On the front screen of iPhone Duo, Safari keeps a column of buttons down one side and lays pages out in the space beside it. Overhang lays them out across the whole screen, so pages run under the column the way other apps do.
+
+- On for every site, with the sites you switch off as exceptions. Or the other way round: off everywhere, on for the sites you pick.
+- A button in Safari's column switches it for the site you're on.
+- Headers and pictures use the full width. Text keeps clear of the buttons unless you let it run under them.
+- Portrait and landscape, and Shift Display for phones in a case.
+
+Where Safari already gives a page the whole screen, Overhang leaves it alone.
+
+Overhang is a Safari extension. Safari asks before letting it change a site, and warns that an extension allowed on a site can read its pages. Overhang reads where things sit on the page and how wide they are, and changes their layout. It makes no network requests and keeps nothing but your settings.
+
+The source is public: github.com/bad1dea/overhang

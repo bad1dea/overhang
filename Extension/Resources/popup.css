@@ -82,16 +82,3 @@ input[type="checkbox"]::after {
 }
 input[type="checkbox"]:checked { background: var(--on); }
 input[type="checkbox"]:checked::after { transform: translateX(20px); }
-details { margin-top: 12px; }
-summary { cursor: pointer; }
-pre {
-  margin: 6px 0 0;
-  padding: 8px;
-  border-radius: 8px;
-  background: var(--panel);
-  font: 11px/1.4 ui-monospace, Menlo, monospace;
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
-  user-select: text;
-  -webkit-user-select: text;
-}

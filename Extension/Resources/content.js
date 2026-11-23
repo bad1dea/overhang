@@ -148,14 +148,12 @@ html[data-overhang]::-webkit-scrollbar:horizontal{display:none}`;
   // two layouts while scrolling. If the sizes stay off for a couple of seconds (a pinch, a turn of the phone) the
   // changes are taken off.
   let misses = 0;
-  let missed = "";
 
   function arrange() {
     if (!full || !document.body) return undo();
 
     if (!fits()) {
       misses += 1;
-      missed = `${visualViewport.width}+${COLUMN} vs ${full}, layout ${root.clientWidth}`;
 
       if (misses % 8 === 0) undo();
 
@@ -326,7 +324,6 @@ svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.9;stroke
   // didn't answer), so every touch and click on the page is checked against where the button is drawn. Both a
   // touchend and the click after it can arrive; the second is ignored.
   let tapped = 0;
-  let lastTap = "";
 
   function toggle(event) {
     event.preventDefault();
@@ -353,12 +350,6 @@ svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.9;stroke
   }
 
   function heard(event, x, y) {
-    const r = host.isConnected ? host.getBoundingClientRect() : null;
-    const target = event.target?.tagName?.toLowerCase() ?? "?";
-
-    lastTap = `${event.type} at ${Math.round(x)},${Math.round(y)} on ${target}` +
-      (r ? `, button ${Math.round(r.left)},${Math.round(r.top)}` : "");
-
     if (onButton(x, y)) toggle(event);
   }
 
@@ -418,22 +409,6 @@ svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.9;stroke
       duo: Boolean(wide()),
       wide: Boolean(full),
       off: settings.off,
-      // What Safari reports, shown in the panel's details line, for working out pages that don't widen.
-      measured: {
-        screen: `${screen.width}x${screen.height}`,
-        orientation: screen.orientation.type,
-        shown: `${Math.round(visualViewport.width * 10) / 10}x${Math.round(visualViewport.height * 10) / 10}`,
-        scale: Math.round(visualViewport.scale * 1000) / 1000,
-        inner: `${innerWidth}x${innerHeight}`,
-        layout: root.clientWidth,
-        column: left ? "left" : "right",
-        scrollX: Math.round(scrollX),
-        misses,
-        lastTap,
-        missed,
-        tags: tags.length,
-        viewport: tags.at(-1)?.content ?? "",
-      },
     });
   });
 

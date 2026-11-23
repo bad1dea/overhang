@@ -1,0 +1,9 @@
+Overhang only changes pages on the front screen of iPhone Duo, where Safari keeps a column of buttons beside the page. On other iPhones Safari already gives pages the whole screen, and Overhang leaves them unchanged.
+
+To try it on an iPhone Duo:
+1. Open Overhang and tap Open Safari Settings (or go to Settings > Apps > Safari > Extensions > Overhang).
+2. Turn the extension on and set All Websites to Allow.
+3. Open any site in Safari on the front screen. The page fills the screen, under Safari's buttons.
+4. The round button in Safari's column, above New Tab, switches it off and on for that site. Overhang's toolbar menu has the same switches.
+
+The extension makes no network requests. Its source is at https://github.com/bad1dea/overhang

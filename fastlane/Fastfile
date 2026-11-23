@@ -178,4 +178,37 @@ platform :ios do
     asc_login
     hand_to_testers(build_no)
   end
+
+  # Text, links and review notes come from fastlane/metadata; screenshots from fastlane/screenshots once there are
+  # some. Contact details for App Review, pricing, age rating and the privacy answers are set in App Store Connect,
+  # since the repo is public and the API doesn't cover the privacy answers.
+  desc "Upload the App Store listing for BUILD (or the newest build); SUBMIT=1 also sends it for review"
+  lane :store do
+    api_key = app_store_connect_api_key(
+      key_id: ENV.fetch("ASC_KEY_ID"),
+      issuer_id: ENV.fetch("ASC_ISSUER_ID"),
+      key_content: ENV.fetch("ASC_KEY_P8_BASE64"),
+      is_key_content_base64: true
+    )
+    screenshots = File.join(ROOT, "fastlane/screenshots")
+    have_screenshots = Dir.glob(File.join(screenshots, "*/*.png")).any?
+
+    deliver(
+      api_key: api_key,
+      app_identifier: APP_ID,
+      app_version: "1.0",
+      build_number: ENV["BUILD"].to_s.empty? ? nil : ENV["BUILD"],
+      metadata_path: File.join(ROOT, "fastlane/metadata"),
+      screenshots_path: screenshots,
+      skip_screenshots: !have_screenshots,
+      overwrite_screenshots: have_screenshots,
+      skip_binary_upload: true,
+      skip_app_version_update: false,
+      submit_for_review: ENV["SUBMIT"] == "1",
+      automatic_release: false,
+      run_precheck_before_submit: false,
+      force: true,
+      submission_information: { add_id_info_uses_idfa: false }
+    )
+  end
 end

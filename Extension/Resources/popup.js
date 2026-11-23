@@ -49,19 +49,6 @@ async function show() {
   $("site").textContent = site || "This page";
   $("status").textContent = describe(state);
   $("run").hidden = Boolean(state) || !tab;
-  $("details").hidden = !state?.measured;
-  if (state?.measured) {
-    const m = state.measured;
-    $("measured").textContent = [
-      `screen ${m.screen} ${m.orientation}`,
-      `shown ${m.shown} at ${m.scale}, inner ${m.inner}, layout ${m.layout}`,
-      `column ${m.column}, scrolled ${m.scrollX}`,
-      `size misses ${m.misses}${m.missed ? `, last ${m.missed}` : ""}, waiting ${m.waits}`,
-      `phone ${state.phone}, duo ${state.duo}, wide ${state.wide}, off ${state.off}`,
-      `${m.tags} viewport tag(s): ${m.viewport || "none"}`,
-      `last tap: ${m.lastTap || "none yet"}`,
-    ].join("\n");
-  }
 
   const saved = await browser.storage.local.get(site ? [EVERY, `off:${site}`, `on:${site}`, UNDER, BUTTON] : [EVERY, UNDER, BUTTON]);
   const every = saved[EVERY] !== false;

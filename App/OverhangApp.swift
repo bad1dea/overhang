@@ -123,7 +123,6 @@ struct Home: View {
 }
 
 private struct SettingsButton: View {
-    @Environment(\.openURL) private var openURL
     @State private var failed: String?
 
     var body: some View {
@@ -147,17 +146,6 @@ private struct SettingsButton: View {
             Text("If Settings opens on the list of apps, go to **Safari › Extensions › Overhang**.")
                 .font(.footnote)
                 .foregroundStyle(.secondary)
-
-            // Test build only: which of these lands on Overhang's page in Settings decides what the button does.
-            DisclosureGroup("Other ways to open Settings") {
-                Button("Settings › Overhang") {
-                    openURL(URL(string: UIApplication.openSettingsURLString)!)
-                }
-                Button("Settings › Safari › Extensions") {
-                    openURL(URL(string: "App-prefs:SAFARI&path=WEB_EXTENSIONS")!)
-                }
-            }
-            .font(.footnote)
 
             if let failed {
                 Text(failed).font(.footnote).foregroundStyle(.red)
