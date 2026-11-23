@@ -17,8 +17,9 @@
   const COLUMN = 84; // points Safari keeps for its buttons
   const GAP = 6; // points between the buttons and what you read or tap
   // Widths Safari has been seen to show beside its column. They differ between phones (382 of 466 on Brim's and
-  // Splay's Duos, 377 of 461 on ours), so they're only used when the screen size can't be trusted.
-  const SHOWN = [377, 382, 594];
+  // Splay's Duos, 377 of 461 on ours with Shift Display for a case on), so they're only used when the screen size
+  // can't be trusted. 589 is the guess for that shift on its side.
+  const SHOWN = [377, 382, 589, 594];
 
   const CONTROLS =
     'a[href],button,input,label,select,textarea,summary,[role="button"],[role="link"],[role="menuitem"],[role="tab"],[onclick]';
@@ -45,6 +46,7 @@ html[data-overhang]::-webkit-scrollbar:horizontal{display:none}`;
   let tags = []; // the page's viewport tags
   let phone = false; // the page is laid out for phones (device-width)
   let full = 0; // the screen's width while the page is widened, else 0
+  let left = false; // Safari's column is on the left (on its side, camera on the left)
 
   const extra = (width) => `, width=${width}, height=device-height, initial-scale=1, minimum-scale=1`;
   const EXTRA = new RegExp(extra("\\d+"), "g");
@@ -54,15 +56,14 @@ html[data-overhang]::-webkit-scrollbar:horizontal{display:none}`;
   const own = (tag) => tag.content.replace(EXTRA, "");
   const want = (tag) => own(tag) + (full ? extra(full) : "");
 
-  // The screen's width when Safari has its column on the right, else 0. On its side with the camera on the left
-  // (landscape-primary) the column is on the left, and the page stays as Safari lays it out.
-  // Safari has its column when the screen is the column's width wider than what it shows. The shown width is scaled,
-  // so a pinch on another phone never reads as the Duo's. Private Browsing's fingerprinting protection reports a
-  // made-up screen size; then the shown width is checked against the ones seen on Duos.
+  // The screen's width when Safari has its column beside the page, else 0. Safari has its column when the screen is
+  // the column's width wider than what it shows, which holds whatever the screen's size (Shift Display for a case
+  // takes a few points off it). The shown width is scaled, so a pinch on another phone never reads as the Duo's.
+  // Private Browsing's fingerprinting protection reports a made-up screen size; then the shown width is checked
+  // against the ones seen on Duos. On its side with the camera on the left (landscape-primary) the column is on the
+  // left.
   function wide() {
     const type = screen.orientation.type;
-
-    if (type === "landscape-primary") return 0;
     const across = type.startsWith("landscape")
       ? Math.max(screen.width, screen.height)
       : Math.min(screen.width, screen.height);
@@ -77,6 +78,7 @@ html[data-overhang]::-webkit-scrollbar:horizontal{display:none}`;
   // over the page's own.
   function widen() {
     full = phone && !settings.off ? wide() : 0;
+    left = screen.orientation.type === "landscape-primary";
 
     for (const tag of tags) if (tag.content !== want(tag)) tag.content = want(tag);
 
@@ -118,6 +120,19 @@ html[data-overhang]::-webkit-scrollbar:horizontal{display:none}`;
     changes = [];
   }
 
+  // Everything below measures across the page toward the column, so one set of rules serves both sides: with the
+  // column on the left a box is mirrored, measured from the page's right edge (Splay does the same).
+  function box(el) {
+    const r = el.getBoundingClientRect();
+
+    if (!left) return r;
+    const x = root.getBoundingClientRect().left;
+
+    return { left: full - (r.right - x), right: full - (r.left - x), top: r.top, bottom: r.bottom, width: r.width, height: r.height };
+  }
+
+  const facing = () => (left ? "Left" : "Right"); // the side of a box that faces the column
+
   // The page is laid out the full width and shown unzoomed, the part beside the column counted as shown (see wide).
   const fits = () => full && root.clientWidth === full && Math.abs(visualViewport.width + COLUMN - full) <= 2;
 
@@ -130,18 +145,19 @@ html[data-overhang]::-webkit-scrollbar:horizontal{display:none}`;
     const found = { bars: [], blocks: new Map(), controls: [], rows: [] };
     walk(document.body, edge, found, { inside: false, block: null });
 
-    const bars = found.bars.map((el) => [el, el.getBoundingClientRect().left, getComputedStyle(el)]);
+    const bars = found.bars.map((el) => [el, box(el).left, getComputedStyle(el)]);
 
     if (!settings.under)
-      for (const [el, padding] of found.blocks) if (!within(el, found.blocks)) set(el, "padding-right", `${padding}px`);
+      for (const [el, padding] of found.blocks)
+        if (!within(el, found.blocks)) set(el, `padding-${facing().toLowerCase()}`, `${padding}px`);
 
     for (const [el, left, css] of bars) fit(el, left, css, edge);
 
     // A bar held to the right (on a right-to-left page) or centered moves right as it narrows, still reaching under
     // the column. (One parked past the screen's edge, like a closed side menu, doesn't, and stays out of sight.)
-    const narrowed = bars.map(([el, left]) => [el, left, el.getBoundingClientRect()]);
+    const narrowed = bars.map(([el, start]) => [el, start, box(el)]);
 
-    for (const [el, left, r] of narrowed) if (r.left > left + 0.5 && r.right > edge + 0.5) shift(el, r.right - edge);
+    for (const [el, start, r] of narrowed) if (r.left > start + 0.5 && r.right > edge + 0.5) shift(el, r.right - edge);
 
     for (const el of found.rows) el.setAttribute("data-overhang-row", "");
     sliding = found.rows;
@@ -154,7 +170,9 @@ html[data-overhang]::-webkit-scrollbar:horizontal{display:none}`;
   // Safari counts only the part beside the column as shown, so it lets the page slide that far sideways. A page that
   // scrolls itself there (Google's results) or opens at its right edge (right-to-left pages) is put back, once no
   // finger is on it (put back under a finger, a page that lets itself be dragged sideways shook) and nothing is being
-  // typed (Safari slides the page to keep the caret in sight).
+  // typed (Safari slides the page to keep the caret in sight). With the column on the left, Safari shows the page
+  // from beside the column and the extra width lands off the right edge, so the page rests scrolled by the column's
+  // width, which brings its left edge under the column.
   let touches = 0;
 
   function home() {
@@ -164,8 +182,10 @@ html[data-overhang]::-webkit-scrollbar:horizontal{display:none}`;
 
     const typing = focused?.matches("input,textarea,[contenteditable]:not([contenteditable=false])");
 
-    if (!touches && !typing && fits() && Math.abs(scrollX) > 0.5)
-      scrollBy({ left: -scrollX, top: 0, behavior: "instant" });
+    const rest = left ? COLUMN / visualViewport.scale : 0;
+
+    if (!touches && !typing && fits() && Math.abs(scrollX - rest) > 0.5)
+      scrollBy({ left: rest - scrollX, top: 0, behavior: "instant" });
   }
 
   // One pass down the page. Fixed and sticky boxes reaching the column are bars, and keep their contents beside it;
@@ -175,7 +195,7 @@ html[data-overhang]::-webkit-scrollbar:horizontal{display:none}`;
     const css = getComputedStyle(el);
 
     if (css.display === "none") return;
-    const r = el.getBoundingClientRect();
+    const r = box(el);
     const over = r.right - edge;
 
     // A frame lays out its own page, so it's fitted like a bar: a sign-in or consent dialog then fits beside the
@@ -201,12 +221,11 @@ html[data-overhang]::-webkit-scrollbar:horizontal{display:none}`;
     const whole = bar || (control && css.display !== "inline");
 
     if (text && holder && !inside && !whole) {
-      const box = getComputedStyle(holder);
+      const css = getComputedStyle(holder);
+      const side = facing();
+      const by = box(holder).right - parseFloat(css[`border${side}Width`]) - parseFloat(css[`padding${side}`]) - edge;
 
-      const by =
-        holder.getBoundingClientRect().right - parseFloat(box.borderRightWidth) - parseFloat(box.paddingRight) - edge;
-
-      if (by > 0) found.blocks.set(holder, parseFloat(box.paddingRight) + by);
+      if (by > 0) found.blocks.set(holder, parseFloat(css[`padding${side}`]) + by);
     }
 
     // Web components (Reddit's) lay out their own open shadow trees, with the page's elements placed in them.
@@ -225,9 +244,19 @@ html[data-overhang]::-webkit-scrollbar:horizontal{display:none}`;
 
   // A bar, or a row of controls, ends at the column's edge, so what it holds (centered, right-aligned or positioned
   // in it) moves in with it, and its color carries on to the screen's edge underneath the column.
-  function fit(el, left, css, edge) {
+  // With the column on the left a bar can't be narrowed from its far side, so it keeps its width and its own left
+  // padding grows by the part under the column; its background already runs under the column.
+  function fit(el, start, css, edge) {
     set(el, "box-sizing", "border-box");
-    set(el, "max-width", `${edge - left}px`);
+
+    if (left) {
+      const under = box(el).right - edge;
+
+      if (under > 0) set(el, "padding-left", `${parseFloat(css.paddingLeft) + under}px`);
+
+      return;
+    }
+    set(el, "max-width", `${edge - start}px`);
 
     if (css.position === "static") set(el, "position", "relative");
     const fill = color(css);
@@ -249,21 +278,21 @@ html[data-overhang]::-webkit-scrollbar:horizontal{display:none}`;
   // Controls still reaching under the column move in: the row each sits in ends at the edge (see fit), and one in no
   // row, or that its row doesn't bring in, moves with the small group around it.
   function dodge(controls, edge) {
-    const over = controls.filter((el) => el.getBoundingClientRect().right > edge + 0.5);
+    const over = controls.filter((el) => box(el).right > edge + 0.5);
     const rows = new Map();
 
     for (const el of over) {
       const row = rowOf(el);
 
-      if (row && !rows.has(row)) rows.set(row, [row.getBoundingClientRect().left, getComputedStyle(row)]);
+      if (row && !rows.has(row)) rows.set(row, [box(row).left, getComputedStyle(row)]);
     }
 
-    for (const [row, [left, css]] of rows) fit(row, left, css, edge);
+    for (const [row, [start, css]] of rows) fit(row, start, css, edge);
 
     const moved = new Set();
 
     for (const el of over) {
-      const by = el.getBoundingClientRect().right - edge;
+      const by = box(el).right - edge;
       const group = groupOf(el);
 
       if (by > 0.5 && !moved.has(group)) shift(group, by);
@@ -271,13 +300,13 @@ html[data-overhang]::-webkit-scrollbar:horizontal{display:none}`;
     }
   }
 
-  // Moves an element left on top of its own translate (Tailwind centers dialogs and icons with it), and below the
+  // Moves an element away from the column on top of its own translate (Tailwind centers dialogs and icons with it), and below the
   // page's animations of it, which play as the page made them.
   function shift(el, by) {
     const translate = getComputedStyle(el).translate;
     const [x, ...rest] = translate === "none" ? ["0px"] : translate.match(/calc\((?:[^()]|\([^()]*\))*\)|\S+/g);
 
-    set(el, "translate", [`calc(${x} - ${by}px)`, ...rest].join(" "), "");
+    set(el, "translate", [`calc(${x} ${left ? "+" : "-"} ${by}px)`, ...rest].join(" "), "");
   }
 
   // The nearest bar-like box around a control: most of the page wide, a single line or two tall.
@@ -366,6 +395,8 @@ html[data-overhang]::-webkit-scrollbar:horizontal{display:none}`;
         scale: Math.round(visualViewport.scale * 1000) / 1000,
         inner: `${innerWidth}x${innerHeight}`,
         layout: root.clientWidth,
+        column: left ? "left" : "right",
+        scrollX: Math.round(scrollX),
         tags: tags.length,
         viewport: tags.at(-1)?.content ?? "",
       },

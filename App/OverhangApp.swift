@@ -72,7 +72,7 @@ struct Home: View {
                     Tip(symbol: "lock.shield", title: "Allow a site for good",
                         detail: "Tap Overhang in the menu, then Always Allow on This Website. Its pages are widened as they open.")
                     Tip(symbol: "rectangle.portrait.rotate", title: "On its side",
-                        detail: "With the camera on the left, Safari moves its buttons left and Overhang leaves the page as it is.")
+                        detail: "Works both ways round. With the camera on the left, Safari moves its buttons left and Overhang follows them.")
                 }
 
                 Section {

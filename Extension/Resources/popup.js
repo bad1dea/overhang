@@ -26,7 +26,7 @@ function describe(state) {
   if (!state) return "Not running on this page. Widen it once, or allow Overhang on this site in Safari to have it widen every page here.";
   if (state.off) return "Off for this site.";
   if (state.wide) return "Using the whole screen.";
-  if (!state.duo) return "Nothing to do here: Safari already gives this page the whole screen, or its buttons are on the left.";
+  if (!state.duo) return "Nothing to do here: Safari already gives this page the whole screen.";
   if (!state.phone) return "This page isn't laid out for phones, so it's left as it is.";
   return "Waiting for the page to settle.";
 }
@@ -43,6 +43,7 @@ async function show() {
     $("measured").textContent = [
       `screen ${m.screen} ${m.orientation}`,
       `shown ${m.shown} at ${m.scale}, inner ${m.inner}, layout ${m.layout}`,
+      `column ${m.column}, scrolled ${m.scrollX}`,
       `phone ${state.phone}, duo ${state.duo}, wide ${state.wide}, off ${state.off}`,
       `${m.tags} viewport tag(s): ${m.viewport || "none"}`,
     ].join("\n");

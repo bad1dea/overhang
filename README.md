@@ -20,7 +20,9 @@ banners and sign-in dialogs end at the column so their buttons stay reachable.
 The panel behind **•••** › **Overhang** can widen the page you're on once (handy on a site you haven't allowed),
 switch Overhang off for a site, and let text run under the buttons.
 
-It leaves other iPhones, the unfolded Duo, and pages not laid out for phones (no `width=device-width`) alone.
+It works in portrait and in both landscapes (with the camera on the left Safari moves its column to the left, and
+Overhang mirrors everything), with or without Shift Display for a case. It leaves other iPhones, the unfolded Duo,
+and pages not laid out for phones (no `width=device-width`) alone.
 
 ## Layout
 
