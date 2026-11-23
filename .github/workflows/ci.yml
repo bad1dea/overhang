@@ -18,7 +18,8 @@ jobs:
       - name: Check the extension's scripts
         run: |
           for f in Extension/Resources/*.js; do node --check "$f"; done
-          python3 -m json.tool Extension/Resources/manifest.json >/dev/null
+          # App Store upload refuses a manifest description over 112 characters.
+          python3 -c 'import json; d=json.load(open("Extension/Resources/manifest.json"))["description"]; assert len(d) <= 112, len(d)'
       - run: brew install xcodegen
       - run: xcodegen generate
       - name: Build
