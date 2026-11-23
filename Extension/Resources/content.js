@@ -175,19 +175,13 @@ html[data-overhang]::-webkit-scrollbar:horizontal{display:none}`;
     const found = { bars: [], blocks: new Map(), controls: [], rows: [] };
     walk(document.body, edge, found, { inside: false, block: null });
 
-    const bars = found.bars.map((el) => [el, box(el).left, getComputedStyle(el)]);
+    const bars = found.bars.map((el) => [el, getComputedStyle(el)]);
 
     if (!settings.under)
       for (const [el, padding] of found.blocks)
         if (!within(el, found.blocks)) set(el, `padding-${facing().toLowerCase()}`, `${padding}px`);
 
-    for (const [el, left, css] of bars) fit(el, left, css, edge);
-
-    // A bar held to the right (on a right-to-left page) or centered moves right as it narrows, still reaching under
-    // the column. (One parked past the screen's edge, like a closed side menu, doesn't, and stays out of sight.)
-    const narrowed = bars.map(([el, start]) => [el, start, box(el)]);
-
-    for (const [el, start, r] of narrowed) if (r.left > start + 0.5 && r.right > edge + 0.5) shift(el, r.right - edge);
+    for (const [el, css] of bars) fit(el, css, edge);
 
     for (const el of found.rows) el.setAttribute("data-overhang-row", "");
     sliding = found.rows;
@@ -272,37 +266,18 @@ html[data-overhang]::-webkit-scrollbar:horizontal{display:none}`;
     return false;
   }
 
-  // A bar, or a row of controls, ends at the column's edge, so what it holds (centered, right-aligned or positioned
-  // in it) moves in with it, and its color carries on to the screen's edge underneath the column.
-  // With the column on the left a bar can't be narrowed from its far side, so it keeps its width and its own left
-  // padding grows by the part under the column; its background already runs under the column.
-  function fit(el, start, css, edge) {
+  // A bar, or a row of controls, keeps its full width, so its background, borders and pictures run on under the
+  // column, and its padding on the column's side grows by the part under the column, which brings what it holds
+  // (centered, right-aligned or in a row) in beside it. Brim narrowed bars instead and painted their color on with a
+  // shadow, but a bar with a gradient, an image or a colored line (Kotaku's) then visibly snapped narrower.
+  function fit(el, css, edge) {
+    const under = box(el).right - edge;
+
+    if (under <= 0) return;
+    const side = facing();
+
     set(el, "box-sizing", "border-box");
-
-    if (left) {
-      const under = box(el).right - edge;
-
-      if (under > 0) set(el, "padding-left", `${parseFloat(css.paddingLeft) + under}px`);
-
-      return;
-    }
-    set(el, "max-width", `${edge - start}px`);
-
-    if (css.position === "static") set(el, "position", "relative");
-    const fill = color(css);
-
-    if (fill)
-      set(
-        el,
-        "box-shadow",
-        `${css.boxShadow === "none" ? "" : `${css.boxShadow},`}${root.clientWidth - edge}px 0 0 ${fill}`,
-      );
-  }
-
-  function color(css) {
-    const value = css.backgroundColor;
-
-    return value === "transparent" || /rgba\(.*,\s*0\)$/.test(value) ? null : value;
+    set(el, `padding-${side.toLowerCase()}`, `${parseFloat(css[`padding${side}`]) + under}px`);
   }
 
   // Controls still reaching under the column move in: the row each sits in ends at the edge (see fit), and one in no
@@ -314,10 +289,10 @@ html[data-overhang]::-webkit-scrollbar:horizontal{display:none}`;
     for (const el of over) {
       const row = rowOf(el);
 
-      if (row && !rows.has(row)) rows.set(row, [box(row).left, getComputedStyle(row)]);
+      if (row && !rows.has(row)) rows.set(row, getComputedStyle(row));
     }
 
-    for (const [row, [start, css]] of rows) fit(row, start, css, edge);
+    for (const [row, css] of rows) fit(row, css, edge);
 
     const moved = new Set();
 
