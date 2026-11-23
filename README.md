@@ -17,8 +17,7 @@ A round button beside Safari's column, under the level of its bookmarks button, 
 you're on. The panel behind
 **•••** › **Overhang** has **Widen every site** (on unless you turn it off), a switch for the site
 you're on (an exception to the first: skip this site, or widen it when the rest aren't), **Widen this page** for a
-page Overhang can't see yet, a switch to let text run under the buttons, one to slide header buttons out from under Safari's camera and clock
-(off by default), and one to hide the round button.
+page Overhang can't see yet, a switch to let text run under the buttons, and one to hide the round button.
 
 If you'd rather Safari kept Overhang out of most sites, set **All Websites** to **Ask** and allow sites one at a time
 from the same menu.
@@ -62,6 +61,11 @@ CI (`.github/workflows`):
 The layout code is adapted from [Brim](https://github.com/AVGVSTVS96/brim) (MIT), which in turn credits
 [Splay](https://github.com/aztechead/splay) and [DuoWide](https://github.com/hyungchulc/duowide) for working out how
 Safari behaves on this screen.
+
+## Wishlist
+
+- Keep header buttons out from under Safari's camera and clock, sliding only the covered ones in. Tried in build 13
+  (camera areas from Splay's measurements); it didn't work on the Duo, so it was taken out again.
 
 ## Privacy
 
