@@ -61,9 +61,13 @@ final class Shots: XCTestCase {
         _ = settings.cells.firstMatch.waitForExistence(timeout: 20)
         sleep(3)
         shot("03-settings-launched", tree: settings)
-        if tap(settings, ["Search"], scrolls: 0) {
-            sleep(2)
-            settings.typeText("Overhang")
+        tap(settings, ["Search"], scrolls: 0)
+        sleep(2)
+        let field = settings.searchFields.firstMatch
+        if field.waitForExistence(timeout: 5) {
+            field.tap()
+            sleep(1)
+            field.typeText("Overhang")
             sleep(4)
             shot("04-settings-search", tree: settings)
             let hit = settings.cells.containing(.staticText, identifier: "Overhang").firstMatch

@@ -51,7 +51,7 @@ jobs:
           done > shots/webextensions.txt 2>&1 || true
           db="$safari/Library/Safari/MagicExtensions/Extensions.db"
           { sqlite3 "$db" .schema; sqlite3 -header "$db" "select name from sqlite_master where type='table'" | while read t; do echo "== $t"; sqlite3 -header "$db" "select * from \"$t\" limit 20"; done; } > shots/extensions-db.txt 2>&1 || true
-          cp "$db" shots/ 2>/dev/null || true
+          grep -rl --exclude-dir='*.app' "pro.imnot.overhang.extension" ~/Library/Developer/CoreSimulator/Devices/$UDID/data > shots/extension-id-files.txt 2>/dev/null || true
       - uses: actions/upload-artifact@v4
         if: always()
         with:
