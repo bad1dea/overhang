@@ -1,7 +1,6 @@
-1.png	Pages across the whole front screen
-2.png	Before
-3.png	Every site, or the ones you pick
-4.png	Both ways round
-5.png	Switch it per site
-6.png	Set up in a minute
-7.png	Light and dark
+21-wide-picture.png	Pages across the whole front screen
+22-narrow-picture.png	One tap in Safari's column switches a site back
+24-google.png	On every site, or only the ones you pick
+31-panel.png	Settings right in Safari's menu
+10-app-on.png	Turn it on once in Safari Settings
+50-app-dark.png	Light and dark
