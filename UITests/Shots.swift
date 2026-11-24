@@ -55,16 +55,31 @@ final class Shots: XCTestCase {
 
         openSettingsFromApp("02-settings-button-extension-off")
 
-        // Settings fills its list in a moment after launch; tapping before that finds nothing.
-        settings.terminate()
+        // In the simulator the Apps page in Settings stays empty, so Overhang's page is reached through
+        // Settings' search, or failing that the Safari extensions link (test only; the app never uses it).
         settings.launch()
         _ = settings.cells.firstMatch.waitForExistence(timeout: 20)
         sleep(3)
         shot("03-settings-launched", tree: settings)
-        for label in ["Apps", "Safari", "Extensions", "Overhang"] {
-            let found = tap(settings, [label])
+        if tap(settings, ["Search"], scrolls: 0) {
+            sleep(2)
+            settings.typeText("Overhang")
+            sleep(4)
+            shot("04-settings-search", tree: settings)
+            let hit = settings.cells.containing(.staticText, identifier: "Overhang").firstMatch
+            if hit.waitForExistence(timeout: 5) {
+                hit.tap()
+                sleep(3)
+            }
+        }
+        shot("05-settings-after-search", tree: settings)
+        if !settings.switches.firstMatch.waitForExistence(timeout: 3) {
+            XCUIDevice.shared.system.open(URL(string: "App-prefs:SAFARI&path=WEB_EXTENSIONS")!)
+            sleep(4)
+            shot("05-settings-link", tree: settings)
+            tap(settings, ["Overhang"], scrolls: 3)
             sleep(3)
-            shot("04-settings-\(label)-\(found)", tree: settings)
+            shot("05-settings-link-overhang", tree: settings)
         }
 
         let allow = settings.switches.firstMatch
@@ -79,7 +94,6 @@ final class Shots: XCTestCase {
         }
         shot("06-settings-overhang-on", tree: settings)
 
-        settings.terminate()
         openSettingsFromApp("07-settings-button-extension-on")
 
         overhang.activate()
