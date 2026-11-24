@@ -60,11 +60,13 @@ final class Shots: XCTestCase {
         page("https://en.wikipedia.org/wiki/Overhang_(architecture)", "03-safari-off")
     }
 
-    // Overhang's button is drawn by the page under Safari's column, so it's tapped by position (points on the
-    // 466-wide front screen): 24 from the edge when the page is widened, beside the column when it isn't.
-    func tapOverhangButton(widened: Bool) {
-        let x: CGFloat = widened ? 466 - 24 - 24 : 466 - 84 - 8 - 24
-        safari.coordinate(withNormalizedOffset: .zero).withOffset(CGVector(dx: x, dy: 505)).tap()
+    // Overhang's button sits under Safari's column, where taps are matched by position, so it's tapped at
+    // the middle of its frame rather than through the element.
+    func tapOverhangButton() {
+        let button = safari.buttons.matching(NSPredicate(format: "label ENDSWITH 'this site'")).firstMatch
+        guard button.waitForExistence(timeout: 5) else { return }
+        let frame = button.frame
+        safari.coordinate(withNormalizedOffset: .zero).withOffset(CGVector(dx: frame.midX, dy: frame.midY)).tap()
         sleep(3)
     }
 
@@ -74,39 +76,32 @@ final class Shots: XCTestCase {
         shot("10-app-on")
         openSettingsFromApp("11-settings-button-extension-on")
 
-        page("https://en.wikipedia.org/wiki/Cantilever", "20-wikipedia")
-        tree(safari, "20-wikipedia")
-        tapOverhangButton(widened: true)
-        shot("21-wikipedia-narrow")
-        tapOverhangButton(widened: false)
-        shot("22-wikipedia-wide-again")
-
-        page("https://www.google.com/search?q=hiking+trails", "23-google")
-        page("https://www.nasa.gov", "25-nasa")
-        page("https://en.wikipedia.org/wiki/Fallingwater", "26-fallingwater")
-
-        // Safari's page menu, then Overhang's panel in it.
-        for label in ["Page Menu", "Page Settings", "More", "Format Options"] where safari.buttons[label].exists {
-            safari.buttons[label].tap()
-            sleep(2)
-            break
-        }
-        shot("30-menu")
-        tree(safari, "30-menu")
-        if safari.buttons["Overhang"].exists {
-            safari.buttons["Overhang"].tap()
-        } else if safari.staticTexts["Overhang"].exists {
-            safari.staticTexts["Overhang"].tap()
-        }
+        page("https://en.wikipedia.org/wiki/Fallingwater", "20-wide")
+        safari.swipeUp(velocity: .slow)
         sleep(3)
+        shot("21-wide-picture")
+        tapOverhangButton()
+        shot("22-narrow-picture")
+        tapOverhangButton()
+        shot("23-wide-again")
+
+        page("https://www.google.com/search?q=hiking+trails", "24-google")
+        page("https://en.wikipedia.org/wiki/Cantilever", "25-wikipedia")
+
+        safari.buttons["MoreMenuButton"].tap()
+        sleep(2)
+        shot("30-menu")
+        if safari.buttons["Overhang"].waitForExistence(timeout: 5) {
+            safari.buttons["Overhang"].tap()
+            sleep(4)
+        }
         shot("31-panel")
-        tree(safari, "31-panel")
     }
 
     func testC() throws {
-        safari.terminate()
-        safari.launch()
+        overhang.launch()
         sleep(3)
-        page("https://en.wikipedia.org/wiki/Cantilever", "50-dark")
+        shot("50-app-dark")
+        page("https://en.wikipedia.org/wiki/Fallingwater", "51-safari-dark")
     }
 }
