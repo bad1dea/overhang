@@ -24,10 +24,13 @@ jobs:
           xcrun simctl list devicetypes | tee devicetypes.txt
           xcrun simctl list runtimes | tee runtimes.txt
           type="$(grep -i 'duo' devicetypes.txt | head -1 | sed -E 's/.*\((com\.apple[^)]*)\).*/\1/')"
-          runtime="$(grep -E '^iOS 27' runtimes.txt | tail -1 | sed -E 's/.* - (com\.apple\.CoreSimulator\.SimRuntime\.[^ ]*).*/\1/')"
-          echo "type=$type runtime=$runtime"
-          test -n "$type" && test -n "$runtime"
-          udid="$(xcrun simctl create Duo "$type" "$runtime")"
+          test -n "$type"
+          # The Duo has its own runtime build (iOS-27-2-iPhone19-4); the general ones refuse it as incompatible.
+          udid=""
+          for runtime in $(grep -E '^iOS 27' runtimes.txt | sed -E 's/.* - (com\.apple\.CoreSimulator\.SimRuntime\.[^ ]*).*/\1/' | sort -r); do
+            udid="$(xcrun simctl create Duo "$type" "$runtime" 2>/dev/null)" && { echo "runtime=$runtime"; break; }
+          done
+          test -n "$udid"
           echo "UDID=$udid" >> "$GITHUB_ENV"
           xcrun simctl boot "$udid"
           xcrun simctl bootstatus "$udid" -b
