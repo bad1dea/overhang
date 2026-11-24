@@ -9,7 +9,13 @@ final class Shots: XCTestCase {
     let settings = XCUIApplication(bundleIdentifier: "com.apple.Preferences")
     let safari = XCUIApplication(bundleIdentifier: "com.apple.mobilesafari")
 
-    func shot(_ name: String) {
+    func shot(_ name: String, tree app: XCUIApplication? = nil) {
+        if let app {
+            let attachment = XCTAttachment(string: app.debugDescription)
+            attachment.name = "\(name)-tree"
+            attachment.lifetime = .keepAlways
+            add(attachment)
+        }
         for (n, screen) in XCUIScreen.screens.enumerated() {
             let attachment = XCTAttachment(screenshot: screen.screenshot())
             attachment.name = "\(name)-\(n)"
@@ -49,32 +55,29 @@ final class Shots: XCTestCase {
 
         openSettingsFromApp("02-settings-button-extension-off")
 
+        // Settings fills its list in a moment after launch; tapping before that finds nothing.
         settings.terminate()
         settings.launch()
-        sleep(2)
-        tap(settings, ["Apps"])
-        sleep(1)
-        tap(settings, ["Safari"])
-        sleep(1)
-        shot("03-settings-safari")
-        tap(settings, ["Extensions"])
-        sleep(1)
-        shot("04-settings-extensions")
-        tap(settings, ["Overhang"])
-        sleep(1)
-        shot("05-settings-overhang")
+        _ = settings.cells.firstMatch.waitForExistence(timeout: 20)
+        sleep(3)
+        shot("03-settings-launched", tree: settings)
+        for label in ["Apps", "Safari", "Extensions", "Overhang"] {
+            let found = tap(settings, [label])
+            sleep(3)
+            shot("04-settings-\(label)-\(found)", tree: settings)
+        }
 
         let allow = settings.switches.firstMatch
-        if allow.waitForExistence(timeout: 3), (allow.value as? String) != "1" {
+        if allow.waitForExistence(timeout: 5), (allow.value as? String) != "1" {
             allow.tap()
-            sleep(1)
+            sleep(2)
         }
         if tap(settings, ["All Websites"], scrolls: 2) {
-            sleep(1)
+            sleep(2)
             tap(settings, ["Allow"], scrolls: 1)
-            sleep(1)
+            sleep(2)
         }
-        shot("06-settings-overhang-on")
+        shot("06-settings-overhang-on", tree: settings)
 
         settings.terminate()
         openSettingsFromApp("07-settings-button-extension-on")
@@ -89,8 +92,10 @@ final class Shots: XCTestCase {
                           "https://www.theverge.com",
                           "https://www.google.com/search?q=hiking+trails"].enumerated() {
             safari.open(URL(string: page)!)
-            sleep(10)
-            shot("1\(n)-safari")
+            // The runner's network is slow; wait for the page to put text on screen.
+            _ = safari.webViews.staticTexts.element(boundBy: 5).waitForExistence(timeout: 45)
+            sleep(5)
+            shot("1\(n)-safari", tree: n == 0 ? safari : nil)
         }
 
         XCUIDevice.shared.orientation = .landscapeLeft

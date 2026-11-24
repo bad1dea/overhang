@@ -43,6 +43,13 @@ jobs:
           mkdir -p shots
           xcrun xcresulttool export attachments --path build/shots.xcresult --output-path shots || true
           ls -la shots
+          # Where Safari keeps extension state, for turning Overhang on without going through Settings.
+          safari="$(xcrun simctl get_app_container "$UDID" com.apple.mobilesafari data 2>/dev/null || true)"
+          { echo "safari data: $safari"; find "$safari/Library/Safari" -maxdepth 3 2>/dev/null; } > shots/safari-files.txt
+          for f in $(find "$safari/Library/Safari/WebExtensions" -type f 2>/dev/null); do
+            echo "== $f"; plutil -p "$f" 2>/dev/null || head -c 2000 "$f"
+          done > shots/webextensions.txt 2>&1 || true
+          find ~/Library/Developer/CoreSimulator/Devices/$UDID/data/Library/Preferences -name '*afari*' > shots/safari-prefs.txt 2>/dev/null || true
       - uses: actions/upload-artifact@v4
         if: always()
         with:
