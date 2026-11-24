@@ -35,6 +35,7 @@ jobs:
           xcodegen generate
           xcrun simctl ui "$UDID" appearance light
           xcrun simctl privacy "$UDID" grant location com.apple.mobilesafari || true
+          xcrun simctl status_bar "$UDID" override --time 9:41 --wifiBars 3 --cellularBars 4 --batteryState charged --batteryLevel 100 || true
           xcodebuild build-for-testing -project Overhang.xcodeproj -scheme Overhang -destination "id=$UDID" \
             -derivedDataPath build/dd CODE_SIGN_IDENTITY=- CODE_SIGNING_REQUIRED=NO | tail -2
           xcodebuild test-without-building -project Overhang.xcodeproj -scheme Overhang -destination "id=$UDID" \

@@ -43,6 +43,11 @@ final class Shots: XCTestCase {
         // The runner's network is slow; wait for the page to put text on screen.
         _ = safari.webViews.staticTexts.element(boundBy: 5).waitForExistence(timeout: 45)
         sleep(6)
+        // Sites asking for location get a prompt over the page.
+        for label in ["Don’t Allow", "Don't Allow"] where safari.buttons[label].exists {
+            safari.buttons[label].tap()
+            sleep(2)
+        }
         shot(name)
     }
 
@@ -77,7 +82,6 @@ final class Shots: XCTestCase {
         shot("22-wikipedia-wide-again")
 
         page("https://www.google.com/search?q=hiking+trails", "23-google")
-        page("https://www.seriouseats.com", "24-seriouseats")
         page("https://www.nasa.gov", "25-nasa")
         page("https://en.wikipedia.org/wiki/Fallingwater", "26-fallingwater")
 
@@ -97,16 +101,12 @@ final class Shots: XCTestCase {
         sleep(3)
         shot("31-panel")
         tree(safari, "31-panel")
-
-        for orientation in [UIDeviceOrientation.landscapeLeft, .landscapeRight] {
-            XCUIDevice.shared.orientation = orientation
-            sleep(5)
-            shot("40-landscape-\(orientation.rawValue)")
-        }
-        XCUIDevice.shared.orientation = .portrait
     }
 
     func testC() throws {
+        safari.terminate()
+        safari.launch()
+        sleep(3)
         page("https://en.wikipedia.org/wiki/Cantilever", "50-dark")
     }
 }
