@@ -10,16 +10,15 @@ banners and colored bars run under the buttons; lines of text stop beside them, 
 
 ## Using it
 
-1. Install Overhang and open it. **Open Safari Settings** goes straight to the extension.
-2. Turn on **Allow Extension** and set **All Websites** to **Allow**. Every page is widened as it opens.
+Install it, open it and tap Open Safari Settings. Turn on Allow Extension and set All Websites to Allow. Pages are
+widened as they open.
 
-A round button in Safari's column, just above New Tab, switches widening for the site you're on. The panel behind
-**•••** › **Overhang** has **Widen every site** (on unless you turn it off), a switch for the site
-you're on (an exception to the first: skip this site, or widen it when the rest aren't), **Widen this page** for a
-page Overhang can't see yet, a switch to let text run under the buttons, and one to hide the round button.
+The round button in Safari's column, above New Tab, turns widening off or on for the site you're on. The panel under
+••• › Overhang has the same switch, plus Widen every site, Let text run under the buttons, and a switch to hide the
+round button. With Widen every site off, the site switch turns it on for that site instead.
 
-If you'd rather Safari kept Overhang out of most sites, set **All Websites** to **Ask** and allow sites one at a time
-from the same menu.
+To keep Overhang out of most sites, set All Websites to Ask and allow sites one at a time from the same menu. Widen
+this page in the panel works once on a page Overhang hasn't been allowed into.
 
 It works in portrait and in both landscapes (with the camera on the left Safari moves its column to the left, and
 Overhang mirrors everything), with or without Shift Display for a case. It leaves other iPhones, the unfolded Duo,

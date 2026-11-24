@@ -1,6 +1,6 @@
-On the front screen of iPhone Duo, Safari keeps a column of buttons down one side and lays pages out in the space beside it. Overhang lays them out across the whole screen, so pages run under the column the way other apps do.
+On the front screen of iPhone Duo, Safari keeps a column of buttons down one side and lays pages out in the space beside it. Overhang lays them out across the whole screen, under the column.
 
-- On for every site, with the sites you switch off as exceptions. Or the other way round: off everywhere, on for the sites you pick.
+- On for every site, with the sites you switch off as exceptions, or off everywhere except the sites you pick.
 - A button in Safari's column switches it for the site you're on.
 - Headers and pictures use the full width. Text keeps clear of the buttons unless you let it run under them.
 - Portrait and landscape, and Shift Display for phones in a case.
