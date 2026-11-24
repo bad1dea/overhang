@@ -196,6 +196,16 @@ platform :ios do
     hand_to_testers(build_no)
   end
 
+  desc "Print the App Store Connect record's locales and names"
+  lane :listing do
+    asc_login
+    app = Spaceship::ConnectAPI::App.find(APP_ID)
+    UI.message("record: #{app.name}, primary locale #{app.primary_locale}")
+    app.fetch_app_infos.each do |info|
+      info.get_app_info_localizations.each { |l| UI.message("#{info.state}: #{l.locale} name '#{l.name}'") }
+    end
+  end
+
   # The tip: a $0.99 non-consumable that unlocks nothing. Made once; running it again only reports what's there.
   # Apple still wants a review screenshot of the purchase in the app before the tip can go out with a version.
   desc "Make the tip in-app purchase in App Store Connect"

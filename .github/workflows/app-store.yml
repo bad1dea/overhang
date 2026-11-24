@@ -34,4 +34,5 @@ jobs:
           bundler-cache: true
       - if: inputs.tip
         run: bundle exec fastlane tip
+      - run: bundle exec fastlane listing
       - run: bundle exec fastlane store
