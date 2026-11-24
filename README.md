@@ -57,8 +57,11 @@ CI (`.github/workflows`):
   picks the build; tick submit to send it for review. Pricing, age rating, the privacy answers and App Review's contact
   details are set in App Store Connect.
 
-Screenshots: name the Duo screenshots to match `tools/captions.txt`, run `tools/frame.py <folder> tools/captions.txt`,
-commit `fastlane/screenshots`, then run `app-store.yml`.
+Screenshots come from the iPhone Duo simulator: `simulator-shots.yml` runs `UITests/Shots.swift` in two halves and
+turns Overhang on in between by writing Safari's extension state (`Library/Safari/WebExtensions/Extensions.plist` in
+Safari's container), since the simulator's Settings doesn't list apps. Pick shots from the run's artifact, list them in
+`tools/captions.txt`, run `tools/frame.py <folder> tools/captions.txt`, commit `fastlane/screenshots` and run
+`app-store.yml`.
 
 ## Credits
 
