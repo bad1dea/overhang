@@ -58,6 +58,9 @@ CI (`.github/workflows`):
   picks the build; tick submit to send it for review. Pricing, age rating, the privacy answers and App Review's contact
   details are set in App Store Connect.
 
+Screenshots: name the Duo screenshots to match `tools/captions.txt`, run `tools/frame.py <folder> tools/captions.txt`,
+commit `fastlane/screenshots`, then run `app-store.yml`.
+
 ## Credits
 
 The layout code is adapted from [Brim](https://github.com/AVGVSTVS96/brim) (MIT), which in turn credits
